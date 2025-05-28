@@ -1,0 +1,161 @@
+.track-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    background-color: #fafafa;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+    cursor: pointer;
+}
+
+.track-wrapper:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.track-cover {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.track-info {
+    flex: 1;
+}
+
+.track-title {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+}
+
+.track-artist,
+.track-album {
+    margin: 4px 0;
+    color: #555;
+}
+
+.track-genres {
+    margin-top: 8px;
+}
+
+.track-genre {
+    display: inline-block;
+    background-color: #e0e0e0;
+    color: #333;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    border-radius: 999px;
+    margin-right: 6px;
+    margin-bottom: 4px;
+}
+
+.track-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 16px;
+}
+
+.btn {
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.25s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+}
+
+.btn-secondary {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #218838;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #b02a37;
+}
+
+.btn-warning {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #0056b3;
+}
+
+.spinner {
+    font-size: 0.9rem;
+    color: #007bff;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}
+
+.track-cover-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    cursor: pointer;
+}
+
+.track-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.play-icon {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    opacity: 0.85;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    padding: 4px;
+    transition: transform 0.2s ease;
+}
+
+.track-cover-wrapper:hover .play-icon {
+    transform: scale(1.1);
+}

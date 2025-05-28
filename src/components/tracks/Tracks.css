@@ -1,0 +1,110 @@
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: #f7f7f7;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.filter-select {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background-color: #fff;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+.sort-order-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.sort-icon {
+    width: 32px;
+    height: 32px;
+    transition: transform 0.2s ease;
+    fill: #007bff;
+}
+
+.sort-order-btn:hover .sort-icon {
+    transform: scale(1.1);
+}
+
+.add-track-button {
+    background-color: #28a745;
+    color: white;
+    font-size: 1rem;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.add-track-button:hover {
+    background-color: #218838;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-track-button {
+        width: 100%;
+    }
+}
+
+.pagination-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+}
+
+.pagination-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 6px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.pagination-button img {
+    width: 28px;
+    height: 28px;
+}
+
+.pagination-button:hover {
+    transform: scale(1.1);
+}
+
+.pagination-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.no-tracks {
+    width: 100%;
+    text-align: center;
+}

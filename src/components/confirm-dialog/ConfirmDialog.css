@@ -1,0 +1,42 @@
+.confirm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 9999;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 60px;
+    animation: fadeIn 0.3s ease;
+    transition: opacity 0.3s ease;
+}
+
+.confirm-modal {
+    background: #fff;
+    padding: 24px;
+    border-radius: 12px;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.3s ease;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.confirm-overlay.closing {
+    opacity: 0;
+}
+
+.confirm-modal.closing {
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.confirm-dialog-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 20px
+}
