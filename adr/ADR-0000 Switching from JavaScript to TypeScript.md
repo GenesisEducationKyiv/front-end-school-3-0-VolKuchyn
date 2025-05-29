@@ -2,15 +2,7 @@
 
 ## Context
 
-We face increasing challenges in maintaining a large codebase written in JavaScript. The main challenges include:
-
-+ Lack of type-safety, which causes errors that are only discovered at runtime.
-
-+ Difficulties with scaling and code refactoring.
-
-+ Reduced efficiency of communication between developers due to the lack of explicitly documented APIs (types).
-
-+ Increased requirements for product quality and reliability from the business.
+We face increasing challenges in maintaining a large codebase written in JavaScript. The main challenges include the lack of type-safety, which causes errors that are only discovered at runtime. There are also significant difficulties with scaling and code refactoring. The absence of explicitly documented APIs (in the form of types) makes communication between developers less efficient. Additionally, the business now demands higher product quality and reliability.
 
 ## Decision
 
@@ -19,9 +11,7 @@ We:
 
 + Initialize the TypeScript configuration with tsconfig.json.
 
-+ Allow a mixed environment (allowJs) for a gradual migration.
-
-+ Let's start with utilities, then redux, API, and then components.
++ We rewrite all js and jsx code to ts and tsx code, respectively
 
 + Set the types of third-party libraries via @types/....
 
@@ -43,7 +33,7 @@ The rejected alternative - to leave JavaScript - does not solve the current prob
 
 ## Status
 
-Pending
+**Pending**
 
 ## Consequences
 
@@ -54,6 +44,8 @@ Pending
 + It's easier for the team to work with other people's code thanks to auto-completion and types.
 
 + Maintainability improves, especially over the long haul.
+
++ More space for scaling
 
 ### Negatives/challenges:
 
