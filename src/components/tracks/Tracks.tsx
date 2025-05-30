@@ -1,60 +1,53 @@
-import React from 'react'
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllTracks } from '../../redux/tracks-reducer';
-import { useEffect, useState } from 'react';
-import Track from './Track';
-import { setPage, setGenre, setOrder, setSort } from '../../redux/tracks-reducer';
-import { fetchGenres } from '../../redux/form-reducer';
-import { openModal } from '../../redux/form-reducer';
-import Preloader from '../../assets/Preloader';
+import { RootState, AppDispatch } from '../../redux/redux-store';
+import { fetchAllTracks, setPage, setGenre, setOrder, setSort } from '../../redux/tracks-reducer';
+import { fetchGenres, openModal } from '../../redux/form-reducer';
 import { fetchTrackBySlug } from '../../redux/track-modal-reducer';
 import { useParams } from 'react-router-dom';
-import FilterAsc from '../../assets/sort-ascending-svgrepo-com.svg'
-import FilterDesc from '../../assets/sort-descending-svgrepo-com.svg'
-import LeftArrow from '../../assets/left-arrow.svg'
-import RightArrow from '../../assets/right-arrow.svg'
+import Track from './Track';
+import Preloader from '../../assets/Preloader';
+import FilterAsc from '../../assets/sort-ascending-svgrepo-com.svg';
+import FilterDesc from '../../assets/sort-descending-svgrepo-com.svg';
+import LeftArrow from '../../assets/left-arrow.svg';
+import RightArrow from '../../assets/right-arrow.svg';
 import SkeletonTrack from './skeletonTrack/SkeletonTrack';
 import NoTracksImage from '../../assets/no-tracks-found.png';
-import './Tracks.css'
+import './Tracks.css';
 
+const Tracks: React.FC = (): React.JSX.Element => {
+  const dispatch: AppDispatch = useDispatch();
 
-const Tracks = () => {
-  const dispatch = useDispatch();
+  const tracksState = useSelector((state: RootState) => state.tracks);
+  const isPlayer = useSelector((state: RootState) => state.player.currentTrack);
+  const genres = useSelector((state: RootState) => state.form.genres);
 
-  const tracksState = useSelector((state) => state.tracks);
-
-  const isPlayer = useSelector((state) => state.player.currentTrack)
-
-  const { slug } = useParams();
-
+  const { slug } = useParams<{ slug?: string }>();
 
   useEffect(() => {
     if (slug) {
       dispatch(fetchTrackBySlug(slug));
     }
-  }, [slug]);
+  }, [slug, dispatch]);
 
   useEffect(() => {
     dispatch(fetchGenres());
-  }, []);
-
-  const genres = useSelector((state) => state.form.genres);
+  }, [dispatch]);
 
   useEffect(() => {
     dispatch(fetchAllTracks());
-  }, [tracksState.currentPage,
-  tracksState.sort,
-  tracksState.order,
-  tracksState.genre,
-  tracksState.search,
+  }, [
+    dispatch,
+    tracksState.currentPage,
+    tracksState.sort,
+    tracksState.order,
+    tracksState.genre,
+    tracksState.search,
   ]);
 
-
-
-  const setPaginator = (p) => {
+  const setPaginator = (p: number) => {
     dispatch(setPage(p));
-  }
-
+  };
 
   return (
     <>
@@ -135,12 +128,18 @@ const Tracks = () => {
               <img src={LeftArrow} alt="Previous" />
             </button>
 
-            <p>Page {tracksState.currentPage} / {tracksState.totalPages}</p>
+            <p>
+              Page {tracksState.currentPage} / {tracksState.totalPages}
+            </p>
 
             <button
               onClick={() => setPaginator(tracksState.currentPage + 1)}
-              disabled={tracksState.currentPage >= tracksState.totalPages || tracksState.isTracksLoading}
-              aria-disabled={tracksState.currentPage >= tracksState.totalPages || tracksState.isTracksLoading}
+              disabled={
+                tracksState.currentPage >= tracksState.totalPages || tracksState.isTracksLoading
+              }
+              aria-disabled={
+                tracksState.currentPage >= tracksState.totalPages || tracksState.isTracksLoading
+              }
               className="pagination-button"
               title="Next page"
               data-testid="pagination-next"
@@ -173,6 +172,6 @@ const Tracks = () => {
       {isPlayer && <div style={{ height: '65px' }}></div>}
     </>
   );
-}
+};
 
 export default Tracks;

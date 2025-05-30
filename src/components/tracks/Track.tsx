@@ -1,22 +1,34 @@
-import './Track.css'
+import './Track.css';
 import { useDispatch } from 'react-redux';
 import { loadTrack } from '../../redux/player-reducer';
 import { openTrackModal } from '../../redux/track-modal-reducer';
-import DefaultCover from '../../assets/default-cover.jpg'
-import PlayOnCoverIcon from '../../assets/play-on-cover-icon.png'
+import DefaultCover from '../../assets/default-cover.jpg';
+import PlayOnCoverIcon from '../../assets/play-on-cover-icon.png';
+import { AppDispatch } from '../../redux/redux-store';
+import React from 'react';
 
-const Track = (track) => {
+import { TrackType } from '../../types/track-type';
 
-  const dispatch = useDispatch();
+const Track: React.FC<TrackType> = (track) => {
+  const dispatch = useDispatch<AppDispatch>();
 
   return (
-    <div className="track-wrapper" onClick={() => dispatch(openTrackModal({ track }))} data-testid={`track-item-${track.id}`}>
+    <div
+      className="track-wrapper"
+      onClick={() => dispatch(openTrackModal({ track }))}
+      data-testid={`track-item-${track.id}`}
+    >
       <div
         className="track-cover-wrapper"
         onClick={(e) => {
           if (track.audioFile) {
             e.stopPropagation();
-            dispatch(loadTrack({ fileName: track.audioFile, title: track.title, artist: track.artist, id: track.id }));
+            dispatch(loadTrack({
+              fileName: track.audioFile,
+              title: track.title,
+              artist: track.artist,
+              id: track.id,
+            }));
           }
         }}
       >
@@ -35,14 +47,14 @@ const Track = (track) => {
       </div>
 
       <div className="track-info">
-        <h3
-          className="track-title"
-          data-testid={`track-item-${track.id}-title`}
-        >
+        <h3 className="track-title" data-testid={`track-item-${track.id}-title`}>
           {track.title}
         </h3>
 
-        <p className="track-artist" data-testid={`track-item-${track.id}-artist`}>👤 {track.artist}</p>
+        <p className="track-artist" data-testid={`track-item-${track.id}-artist`}>
+          👤 {track.artist}
+        </p>
+
         {track.album && <p className="track-album">💿 {track.album}</p>}
 
         <div className="track-genres">
