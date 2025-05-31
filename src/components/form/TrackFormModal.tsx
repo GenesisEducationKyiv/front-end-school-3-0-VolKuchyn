@@ -5,7 +5,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   closeModal,
   startClosingModal,
-  toggleGenre,
   addTrack,
   updateTrack,
   fetchGenres,
@@ -16,11 +15,12 @@ import { showToast } from '../../redux/toast-reducer';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import './TrackFormModal.css';
 
+
 type TrackFormValues = {
   title: string;
   artist: string;
   album: string;
-  coverImage: string;
+  coverImage?: string;
   genres: string[];
 };
 
@@ -30,7 +30,6 @@ const TrackFormModal: React.FC = () => {
   const genresList = state.genres;
   const currentTrack = state.currentTrack;
   const selectedGenres = state.selectedGenres;
-  const currentPage = useSelector((state: RootState) => state.tracks.currentPage);
   const isEdit = !!currentTrack;
 
   useEffect(() => {
@@ -65,8 +64,11 @@ const TrackFormModal: React.FC = () => {
     values: TrackFormValues,
     { resetForm }: FormikHelpers<TrackFormValues>
   ) => {
-    const getErrorMessage = (error: any, fallback = '❌ An error occurred.') =>
-      typeof error === 'string' ? error : error?.error || fallback;
+    const getErrorMessage = (error: unknown, fallback = '❌ An error occurred.'): string => {
+      if (typeof error === 'string') return error;
+      if (error instanceof Error) return error.message;
+      return fallback;
+    };
 
     if (isEdit) {
       dispatch(updateTrack({ id: currentTrack!.id, updatedData: values }))

@@ -8,7 +8,7 @@ import { pauseTrack } from '../../redux/player-reducer';
 import { showConfirm } from '../../redux/confirm-reducer';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Preloader from '../../assets/Preloader';
-import ConfirmDialog from '../confirm-dialog/confirmDialog';
+import ConfirmDialog from '../confirm-dialog/ConfirmDialog';
 import SkeletonTrack from '../tracks/skeletonTrack/SkeletonTrack';
 import DefaultCover from '../../assets/default-cover.jpg';
 import './TrackModal.css';
@@ -16,9 +16,9 @@ import { RootState, AppDispatch } from '../../redux/redux-store';
 import { useDispatch } from 'react-redux';
 
 const TrackModal: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>(); // 👈 типізований dispatch
+  const dispatch = useDispatch<AppDispatch>(); 
   const { track, isOpen, isClosing, isLoading } = useSelector((state: RootState) => state.trackModal);
-  const { uploadingTrackId, currentPage } = useSelector((state: RootState) => state.tracks);
+  const { uploadingTrackId } = useSelector((state: RootState) => state.tracks);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const navigate = useNavigate();

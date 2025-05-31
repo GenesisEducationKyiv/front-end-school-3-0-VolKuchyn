@@ -3,7 +3,7 @@ export interface TrackType {
     title: string;
     artist: string;
     album?: string;
-    genres?: string[];
+    genres: string[];
     slug: string;
     coverImage?: string;
     createdAt: string;

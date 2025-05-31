@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { TrackType } from '../types/track-type'; // Імпортуй звідки ти створив тип Track
+import { TrackType } from '../types/track-type';
+import { TrackSchema } from '../schemas/track-schema';
+import { Result, err, ok } from 'neverthrow';
 
 interface TrackModalState {
   isOpen: boolean;
@@ -18,17 +20,34 @@ const initialState: TrackModalState = {
   isLoading: false,
 };
 
-export const fetchTrackBySlug = createAsyncThunk<TrackType, string, { rejectValue: string }>(
-  'trackModal/fetchTrackBySlug',
-  async (slug, { rejectWithValue }) => {
-    try {
-      const res = await axios.get<TrackType>(`http://localhost:8000/api/tracks/${slug}`);
-      return res.data;
-    } catch (err) {
-      return rejectWithValue('❌ Track not found!');
+const fetchTrackBySlugSafe = async (slug: string): Promise<Result<TrackType, string>> => {
+  try {
+    const res = await axios.get(`http://localhost:8000/api/tracks/${slug}`);
+    const parsed = TrackSchema.safeParse(res.data);
+
+    if (!parsed.success) {
+      return err('❌ Invalid track format from server.');
     }
+
+    return ok(parsed.data);
+  } catch {
+    return err('❌ Failed to fetch track.');
   }
-);
+};
+
+export const fetchTrackBySlug = createAsyncThunk<
+  TrackType,
+  string,
+  { rejectValue: string }
+>('trackModal/fetchTrackBySlug', async (slug, { rejectWithValue }) => {
+  const result = await fetchTrackBySlugSafe(slug);
+
+  if (result.isErr()) {
+    return rejectWithValue(result.error);
+  }
+
+  return result.value;
+});
 
 const trackModalSlice = createSlice({
   name: 'trackModal',
@@ -45,9 +64,10 @@ const trackModalSlice = createSlice({
     closeTrackModal(state) {
       state.track = null;
       state.isOpen = false;
+      state.isClosing = false;
     },
     updateTrackInModal(state, action: PayloadAction<Partial<TrackType> & { id: string }>) {
-      if (state.track && state.track.id === action.payload.id) {
+      if (state.track?.id === action.payload.id) {
         state.track = { ...state.track, ...action.payload };
       }
     },
@@ -65,11 +85,17 @@ const trackModalSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(fetchTrackBySlug.rejected, (state, action) => {
-        state.error = action.payload || 'Unknown error';
+        state.error = action.payload ?? 'Unknown error';
         state.isLoading = false;
       });
   },
 });
 
-export const { openTrackModal, closeTrackModal, startClosing, updateTrackInModal } = trackModalSlice.actions;
+export const {
+  openTrackModal,
+  closeTrackModal,
+  startClosing,
+  updateTrackInModal,
+} = trackModalSlice.actions;
+
 export default trackModalSlice.reducer;

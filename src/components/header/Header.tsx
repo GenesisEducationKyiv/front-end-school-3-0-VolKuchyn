@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect, ChangeEvent } from 'react';
+import React, { useState, useEffect, ChangeEvent, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from 'lodash';
 import { setSearch } from '../../redux/tracks-reducer';
@@ -7,59 +7,63 @@ import HeaderLogo from '../../assets/music-library-by-volodymyr-kuchynskyi.svg';
 import './Header.css';
 
 const Header: React.FC = () => {
-  const dispatch: AppDispatch = useDispatch();
-  const searchFromRedux = useSelector((state: RootState) => state.tracks.search);
-  const [localSearch, setLocalSearch] = useState<string>(searchFromRedux);
+    const dispatch: AppDispatch = useDispatch();
+    const searchFromRedux = useSelector((state: RootState) => state.tracks.search);
+    const [localSearch, setLocalSearch] = useState<string>(searchFromRedux);
 
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      dispatch(setSearch(value));
-    }, 1000),
-    [dispatch]
-  );
+    const debouncedSearch = useMemo(
+        () => debounce((value: string) => dispatch(setSearch(value)), 1000),
+        [dispatch]
+    );
 
-  useEffect(() => {
-    setLocalSearch(searchFromRedux);
-  }, [searchFromRedux]);
+    useEffect(() => {
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [debouncedSearch]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setLocalSearch(value);
-    debouncedSearch(value);
-  };
+    useEffect(() => {
+        setLocalSearch(searchFromRedux);
+    }, [searchFromRedux]);
 
-  return (
-    <header className="app-header" data-testid="tracks-header">
-      <a href="http://localhost:3000/">
-        <img
-          src={HeaderLogo}
-          alt=""
-          className="header-logo"
-          title="Made by Volodymyr Kuchynskyi"
-        />
-      </a>
+    const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setLocalSearch(value);
+        debouncedSearch(value);
+    };
 
-      <input
-        type="text"
-        className="header-search"
-        placeholder="Search..."
-        value={localSearch}
-        onChange={handleChange}
-        data-testid="search-input"
-      />
+    return (
+        <header className="app-header" data-testid="tracks-header">
+            <a href="http://localhost:3000/">
+                <img
+                    src={HeaderLogo}
+                    alt=""
+                    className="header-logo"
+                    title="Made by Volodymyr Kuchynskyi"
+                />
+            </a>
 
-      {/* Unused because input contains search by artist, album, title etc... */}
-      <input
-        type="text"
-        className="header-search"
-        placeholder="Search..."
-        style={{ display: 'none' }}
-        value={localSearch}
-        onChange={handleChange}
-        data-testid="filter-artist"
-      />
-    </header>
-  );
+            <input
+                type="text"
+                className="header-search"
+                placeholder="Search..."
+                value={localSearch}
+                onChange={handleChange}
+                data-testid="search-input"
+            />
+
+            {/* Unused because input contains search by artist, album, title etc... */}
+            <input
+                type="text"
+                className="header-search"
+                placeholder="Search..."
+                style={{ display: 'none' }}
+                value={localSearch}
+                onChange={handleChange}
+                data-testid="filter-artist"
+            />
+        </header>
+    );
 };
 
 export default Header;

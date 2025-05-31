@@ -4,7 +4,7 @@ import Toast from './components/toast/Toast';
 import Player from './components/player/Player';
 import TrackModal from './components/track-modal/TrackModal';
 import TrackFormModal from './components/form/TrackFormModal';
-import ConfirmDialog from './components/confirm-dialog/confirmDialog';
+import ConfirmDialog from './components/confirm-dialog/ConfirmDialog';
 import Header from './components/header/Header';
 import React from 'react';
 

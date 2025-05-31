@@ -1,7 +1,8 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { hideConfirm, startClosing } from '../../redux/confirm-reducer';
 import './ConfirmDialog.css';
+import { RootState } from '../../redux/redux-store';
 
 type ConfirmCallback = () => void;
 
@@ -13,7 +14,7 @@ type ConfirmDialogComponent = React.FC & {
 
 const ConfirmDialog: React.FC = () => {
   const dispatch = useDispatch();
-  const { isOpen, isClosing, message } = useSelector((state: any) => state.confirm); // Заміни any на RootState
+  const { isOpen, isClosing, message } = useSelector((state: RootState) => state.confirm);
 
   const startClose = () => {
     dispatch(startClosing());
@@ -46,11 +47,10 @@ const ConfirmDialog: React.FC = () => {
   );
 };
 
-// Присвоєння типу та додавання методу
 const ConfirmDialogWithMethod = ConfirmDialog as ConfirmDialogComponent;
 
-ConfirmDialogWithMethod.setOnConfirm = (fn: ConfirmCallback) => {
-  confirmCallback = fn;
+ConfirmDialogWithMethod.setOnConfirm = (_fn: ConfirmCallback) => {
+  confirmCallback = _fn;
 };
 
 export default ConfirmDialogWithMethod;

@@ -6,7 +6,6 @@ import { fetchGenres, openModal } from '../../redux/form-reducer';
 import { fetchTrackBySlug } from '../../redux/track-modal-reducer';
 import { useParams } from 'react-router-dom';
 import Track from './Track';
-import Preloader from '../../assets/Preloader';
 import FilterAsc from '../../assets/sort-ascending-svgrepo-com.svg';
 import FilterDesc from '../../assets/sort-descending-svgrepo-com.svg';
 import LeftArrow from '../../assets/left-arrow.svg';

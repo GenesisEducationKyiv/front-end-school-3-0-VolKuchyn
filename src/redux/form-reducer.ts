@@ -1,25 +1,26 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import axios from "axios";
-import type { TrackType } from "../types/track-type";
+import { z } from "zod";
+import {
+  TrackSchema,
+  type TrackType,
+  type TrackCreateType,
+} from "../schemas/track-schema";
 
 const API_URL = "http://localhost:8000/api";
 
-// Типізація стану
+const GenresSchema = z.array(z.string());
+
 interface FormState {
   selectedGenres: string[];
-
   isModalOpened: boolean;
   isClosing: boolean;
-
   genres: string[];
-
   currentTrack: TrackType | null;
   modalMode: string | null;
-
   isGenresLoading: boolean;
   isTrackSaving: boolean;
   error: string | null;
-
   savedTrack?: TrackType;
 }
 
@@ -35,48 +36,57 @@ const initialState: FormState = {
   error: null,
 };
 
-export const fetchGenres = createAsyncThunk<string[]>(
+export const fetchGenres = createAsyncThunk<string[], void>(
   "addModalForm/fetchGenres",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(`${API_URL}/genres`);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Error when loading genres!");
+      const res = await axios.get(`${API_URL}/genres`);
+      const parsed = GenresSchema.safeParse(res.data);
+      if (!parsed.success) {
+        return rejectWithValue("Invalid genres format received from server");
+      }
+      return parsed.data;
+    } catch {
+      return rejectWithValue("Failed to load genres");
     }
   }
 );
 
-// Async thunk для додавання треку
-export const addTrack = createAsyncThunk<TrackType, Partial<TrackType>>(
+export const addTrack = createAsyncThunk<TrackType, TrackCreateType>(
   "addModalForm/addTrack",
   async (trackData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${API_URL}/tracks`, trackData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Error when adding a track!");
+      const res = await axios.post(`${API_URL}/tracks`, trackData);
+      const parsed = TrackSchema.safeParse(res.data);
+      if (!parsed.success) {
+        return rejectWithValue("Invalid track data from server");
+      }
+      return parsed.data;
+    } catch {
+      return rejectWithValue("Failed to add track");
     }
   }
 );
 
-// Async thunk для оновлення треку
 export const updateTrack = createAsyncThunk<
-TrackType,
-  { id: string; updatedData: Partial<TrackType> }
+  TrackType,
+  { id: string; updatedData: Partial<TrackCreateType> }
 >(
   "addModalForm/updateTrack",
   async ({ id, updatedData }, { rejectWithValue }) => {
     try {
-      const response = await axios.put(`${API_URL}/tracks/${id}`, updatedData);
-      return response.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data || "Error when updating a track!");
+      const res = await axios.put(`${API_URL}/tracks/${id}`, updatedData);
+      const parsed = TrackSchema.safeParse(res.data);
+      if (!parsed.success) {
+        return rejectWithValue("Invalid updated track data from server");
+      }
+      return parsed.data;
+    } catch {
+      return rejectWithValue("Failed to update track");
     }
   }
 );
 
-// Slice
 export const formReducer = createSlice({
   name: "form",
   initialState,
@@ -105,7 +115,7 @@ export const formReducer = createSlice({
     setCurrentTrack(state, action: PayloadAction<TrackType>) {
       const track = action.payload;
       state.currentTrack = track;
-      state.selectedGenres = track.genres || [];
+      state.selectedGenres = track.genres;
     },
   },
   extraReducers: (builder) => {
@@ -122,7 +132,7 @@ export const formReducer = createSlice({
       })
       .addCase(fetchGenres.rejected, (state, action) => {
         state.isGenresLoading = false;
-        state.error = action.payload as string;
+        state.error = typeof action.payload === "string" ? action.payload : "Unknown error";
       })
       .addCase(addTrack.pending, (state) => {
         state.isTrackSaving = true;
@@ -136,7 +146,7 @@ export const formReducer = createSlice({
       .addCase(addTrack.rejected, (state, action) => {
         state.isTrackSaving = false;
         state.selectedGenres = [];
-        state.error = action.payload as string;
+        state.error = typeof action.payload === "string" ? action.payload : "Unknown error";
       })
       .addCase(updateTrack.fulfilled, (state) => {
         state.isTrackSaving = false;
