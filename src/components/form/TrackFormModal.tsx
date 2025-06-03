@@ -24,7 +24,7 @@ type TrackFormValues = {
   genres: string[];
 };
 
-const TrackFormModal: React.FC = () => {
+const TrackFormModal = () => {
   const dispatch = useDispatch<AppDispatch>();
   const state = useSelector((state: RootState) => state.form);
   const genresList = state.genres;

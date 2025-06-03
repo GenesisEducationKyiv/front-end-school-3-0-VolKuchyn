@@ -6,7 +6,7 @@ import { RootState, AppDispatch } from '../../redux/redux-store';
 import HeaderLogo from '../../assets/music-library-by-volodymyr-kuchynskyi.svg';
 import './Header.css';
 
-const Header: React.FC = () => {
+const Header = () => {
     const dispatch: AppDispatch = useDispatch();
     const searchFromRedux = useSelector((state: RootState) => state.tracks.search);
     const [localSearch, setLocalSearch] = useState<string>(searchFromRedux);
@@ -52,16 +52,6 @@ const Header: React.FC = () => {
                 data-testid="search-input"
             />
 
-            {/* Unused because input contains search by artist, album, title etc... */}
-            <input
-                type="text"
-                className="header-search"
-                placeholder="Search..."
-                style={{ display: 'none' }}
-                value={localSearch}
-                onChange={handleChange}
-                data-testid="filter-artist"
-            />
         </header>
     );
 };

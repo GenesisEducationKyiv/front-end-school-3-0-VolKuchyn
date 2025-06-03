@@ -15,7 +15,7 @@ import './TrackModal.css';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import { useDispatch } from 'react-redux';
 
-const TrackModal: React.FC = () => {
+const TrackModal = () => {
   const dispatch = useDispatch<AppDispatch>(); 
   const { track, isOpen, isClosing, isLoading } = useSelector((state: RootState) => state.trackModal);
   const { uploadingTrackId } = useSelector((state: RootState) => state.tracks);

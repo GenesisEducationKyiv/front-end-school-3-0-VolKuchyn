@@ -10,7 +10,7 @@ export const TrackSchema = z.object({
   slug: z.string(),
   createdAt: z.string(),
   updatedAt: z.string(),
-  audioFile: z.string().nullable().optional(), // Додано
+  audioFile: z.string().nullable().optional(),
 });
 
 export type TrackType = z.infer<typeof TrackSchema>;

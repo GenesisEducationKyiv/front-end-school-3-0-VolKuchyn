@@ -14,7 +14,7 @@ import SkeletonTrack from './skeletonTrack/SkeletonTrack';
 import NoTracksImage from '../../assets/no-tracks-found.png';
 import './Tracks.css';
 
-const Tracks: React.FC = (): React.JSX.Element => {
+const Tracks = (): React.JSX.Element => {
   const dispatch: AppDispatch = useDispatch();
 
   const tracksState = useSelector((state: RootState) => state.tracks);

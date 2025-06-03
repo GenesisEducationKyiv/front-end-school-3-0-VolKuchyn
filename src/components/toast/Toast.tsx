@@ -4,7 +4,7 @@ import { clearToast } from '../../redux/toast-reducer';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import './Toast.css';
 
-const Toast: React.FC = () => {
+const Toast = () => {
   const dispatch: AppDispatch = useDispatch();
   const { message, type } = useSelector((state: RootState) => state.toast);
   const [visible, setVisible] = useState(false);

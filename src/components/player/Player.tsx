@@ -7,7 +7,7 @@ import PlayButton from '../../assets/play-button.svg';
 import PauseButton from '../../assets/pause-button.svg';
 import Preloader from '../../assets/Preloader';
 
-const Player: React.FC = () => {
+const Player = () => {
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const dispatch: AppDispatch = useDispatch();
     const { currentTrack, isPlaying, isLoading } = useSelector(

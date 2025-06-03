@@ -42,7 +42,6 @@ const initialState: TracksState = {
     error: null,
 };
 
-// ✨ Валідація + обгортка в neverthrow
 const fetchTracksSafe = async (url: string): Promise<Result<{ data: TrackType[]; meta: TracksMeta }, string>> => {
     try {
         const response = await axios.get(url);
@@ -93,7 +92,7 @@ export const deleteTrack = createAsyncThunk<string, string, { rejectValue: strin
 interface UploadAudioFileArgs {
     id: string;
     file: File;
-    _uniq?: number; // якщо потрібно
+    _uniq?: number;
 }
 
 interface UploadAudioFileResponse {
