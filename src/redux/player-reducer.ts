@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios, { AxiosError } from 'axios';
+import { ok, err, Result } from 'neverthrow';
 
 interface CurrentTrack {
     file: string;
@@ -34,12 +35,12 @@ interface LoadTrackArgs {
 
 function hasName(error: unknown): error is { name: string } {
     return (
-      typeof error === 'object' &&
-      error !== null &&
-      'name' in error &&
-      typeof (error as Record<string, unknown>).name === 'string'
+        typeof error === 'object' &&
+        error !== null &&
+        'name' in error &&
+        typeof (error as Record<string, unknown>).name === 'string'
     );
-  }
+}
 
 function isAxiosError(error: unknown): error is AxiosError {
     return axios.isAxiosError(error);
@@ -56,32 +57,38 @@ export const loadTrack = createAsyncThunk<
 
     currentTrackAbortController = new AbortController();
 
-    try {
-        const response = await axios.get(`http://localhost:8000/api/files/${fileName}`, {
+    const result: Result<CurrentTrack, string> = await axios
+        .get(`http://localhost:8000/api/files/${fileName}`, {
             responseType: 'blob',
             signal: currentTrackAbortController.signal,
+        })
+        .then((response) => {
+            const blobUrl = URL.createObjectURL(response.data);
+            return ok({
+                file: fileName,
+                url: blobUrl,
+                title,
+                artist,
+                id,
+            });
+        })
+        .catch((error: unknown) => {
+            if (isAxiosError(error) && axios.isCancel(error)) {
+                return err('Cancelled');
+            }
+
+            if (hasName(error) && error.name === 'CanceledError') {
+                return err('Cancelled');
+            }
+
+            return err('Could not download the track');
         });
 
-        const blobUrl = URL.createObjectURL(response.data);
-
-        return {
-            file: fileName,
-            url: blobUrl,
-            title,
-            artist,
-            id,
-        };
-    } catch (error: unknown) {
-        if (isAxiosError(error) && axios.isCancel(error)) {
-            return rejectWithValue('Cancelled');
-        }
-
-        if (hasName(error) && error.name === 'CanceledError') {
-            return rejectWithValue('Cancelled');
-        }
-
-        return rejectWithValue('Could not download the track');
+    if (result.isErr()) {
+        return rejectWithValue(result.error);
     }
+
+    return result.value;
 });
 
 const playerReducer = createSlice({
