@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../../redux/redux-store';
-import { fetchAllTracks, setPage, setGenre, setOrder, setSort } from '../../redux/tracks-reducer';
+import { fetchAllTracks, setPage, setGenre, setOrder, setSort, setSearch } from '../../redux/tracks-reducer';
 import { fetchGenres, openModal } from '../../redux/form-reducer';
 import { fetchTrackBySlug } from '../../redux/track-modal-reducer';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { O } from '@mobily/ts-belt';
 import Track from './Track';
 import FilterAsc from '../../assets/sort-ascending-svgrepo-com.svg';
 import FilterDesc from '../../assets/sort-descending-svgrepo-com.svg';
@@ -14,8 +15,10 @@ import SkeletonTrack from './skeletonTrack/SkeletonTrack';
 import NoTracksImage from '../../assets/no-tracks-found.png';
 import './Tracks.css';
 
-const Tracks = (): React.JSX.Element => {
+const Tracks = () => {
   const dispatch: AppDispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const tracksState = useSelector((state: RootState) => state.tracks);
   const isPlayer = useSelector((state: RootState) => state.player.currentTrack);
@@ -34,6 +37,22 @@ const Tracks = (): React.JSX.Element => {
   }, [dispatch]);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+
+    const sort = O.getWithDefault(O.fromNullable(params.get('sort')), '');
+    const order = O.getWithDefault(O.fromNullable(params.get('order')), 'desc') as 'asc' | 'desc';
+    const genre = O.getWithDefault(O.fromNullable(params.get('genre')), '');
+    const page = Number(O.getWithDefault(O.fromNullable(params.get('page')), '1'));
+    const search = O.getWithDefault(O.fromNullable(params.get('search')), '');
+
+    if (sort) dispatch(setSort(sort));
+    if (order === 'asc' || order === 'desc') dispatch(setOrder(order));
+    if (genre) dispatch(setGenre(genre));
+    if (!isNaN(page) && page >= 1) dispatch(setPage(page));
+    if (search) dispatch(setSearch(search));
+  }, [location.search, dispatch]);
+
+  useEffect(() => {
     dispatch(fetchAllTracks());
   }, [
     dispatch,
@@ -42,6 +61,25 @@ const Tracks = (): React.JSX.Element => {
     tracksState.order,
     tracksState.genre,
     tracksState.search,
+  ]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (tracksState.genre) params.set('genre', tracksState.genre);
+    if (tracksState.sort) params.set('sort', tracksState.sort);
+    if (tracksState.order) params.set('order', tracksState.order);
+    if (tracksState.search) params.set('search', tracksState.search);
+    if (tracksState.currentPage > 1) params.set('page', String(tracksState.currentPage));
+
+    navigate({ search: params.toString() }, { replace: true });
+  }, [
+    navigate,
+    tracksState.genre,
+    tracksState.sort,
+    tracksState.order,
+    tracksState.search,
+    tracksState.currentPage,
   ]);
 
   const setPaginator = (p: number) => {

@@ -7,6 +7,8 @@ import {
     type TrackType,
     type TracksMeta,
 } from "../schemas/track-schema";
+import { O } from "@mobily/ts-belt";
+
 
 const API_URL = "http://localhost:8000/api";
 
@@ -64,11 +66,20 @@ export const fetchAllTracks = createAsyncThunk<
     const params = new URLSearchParams();
 
     params.append("page", String(state.currentPage));
-    if (state.sort) params.append("sort", state.sort);
-    if (state.order) params.append("order", state.order);
-    if (state.search) params.append("search", state.search);
-    if (state.genre) params.append("genre", state.genre);
-    if (state.artist) params.append("artist", state.artist);
+
+
+    const appendIfPresent = (key: string, value: string) => {
+        const option = O.fromNullable(value);
+        O.tap(option, (v) => {
+            params.append(key, v);
+        });
+    };
+
+    appendIfPresent("sort", state.sort);
+    appendIfPresent("order", state.order);
+    appendIfPresent("search", state.search);
+    appendIfPresent("genre", state.genre);
+    appendIfPresent("artist", state.artist);
 
     const result = await fetchTracksSafe(`${API_URL}/tracks?${params.toString()}`);
     return result.match(
@@ -77,15 +88,23 @@ export const fetchAllTracks = createAsyncThunk<
     );
 });
 
+const deleteTrackSafe = async (trackId: string): Promise<Result<string, string>> => {
+    try {
+        await axios.delete(`${API_URL}/tracks/${trackId}`);
+        return ok(trackId);
+    } catch {
+        return err("❌ Error deleting track");
+    }
+};
+
 export const deleteTrack = createAsyncThunk<string, string, { rejectValue: string }>(
     "tracks/deleteTrack",
     async (trackId, { rejectWithValue }) => {
-        try {
-            await axios.delete(`${API_URL}/tracks/${trackId}`);
-            return trackId;
-        } catch {
-            return rejectWithValue("❌ Error deleting track");
-        }
+        const result = await deleteTrackSafe(trackId);
+        return result.match(
+            (val) => val,
+            (errorMsg) => rejectWithValue(errorMsg)
+        );
     }
 );
 
@@ -100,6 +119,28 @@ interface UploadAudioFileResponse {
     audioUrl: string;
 }
 
+const uploadAudioFileSafe = async (id: string, file: File): Promise<Result<UploadAudioFileResponse, string>> => {
+    try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await axios.post<{ url?: string }>(
+            `${API_URL}/tracks/${id}/upload`,
+            formData,
+            {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            }
+        );
+
+        return ok({
+            id,
+            audioUrl: res.data?.url ?? '',
+        });
+    } catch {
+        return err('❌ Error uploading file');
+    }
+};
+
 export const uploadAudioFile = createAsyncThunk<
     UploadAudioFileResponse,
     UploadAudioFileArgs,
@@ -107,40 +148,37 @@ export const uploadAudioFile = createAsyncThunk<
 >(
     'tracks/uploadAudioFile',
     async ({ id, file }, { rejectWithValue }) => {
-        try {
-            const formData = new FormData();
-            formData.append('file', file);
-
-            const res = await axios.post<{ url?: string }>(
-                `${API_URL}/tracks/${id}/upload`,
-                formData,
-                {
-                    headers: { 'Content-Type': 'multipart/form-data' },
-                }
-            );
-
-            return {
-                id,
-                audioUrl: res.data?.url ?? '',
-            };
-        } catch {
-            return rejectWithValue('❌ Error uploading file');
-        }
+        const result = await uploadAudioFileSafe(id, file);
+        return result.match(
+            (val) => val,
+            (errorMsg) => rejectWithValue(errorMsg)
+        );
     }
 );
+
+const deleteAudioFileSafe = async (id: string): Promise<Result<{ id: string }, string>> => {
+    try {
+        await axios.delete(`${API_URL}/tracks/${id}/file`);
+        return ok({ id });
+    } catch {
+        return err("❌ Error deleting audio file");
+    }
+};
 
 export const deleteAudioFile = createAsyncThunk<
     { id: string },
     string,
     { rejectValue: string }
->("tracks/deleteAudioFile", async (id, { rejectWithValue }) => {
-    try {
-        await axios.delete(`${API_URL}/tracks/${id}/file`);
-        return { id };
-    } catch {
-        return rejectWithValue("❌ Error deleting audio file");
+>(
+    "tracks/deleteAudioFile",
+    async (id, { rejectWithValue }) => {
+        const result = await deleteAudioFileSafe(id);
+        return result.match(
+            (val) => val,
+            (errorMsg) => rejectWithValue(errorMsg)
+        );
     }
-});
+);
 
 export const tracksReducer = createSlice({
     name: "tracks",

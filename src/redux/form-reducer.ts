@@ -6,6 +6,7 @@ import {
   type TrackType,
   type TrackCreateType,
 } from "../schemas/track-schema";
+import { ok, err, Result } from "neverthrow";
 
 const API_URL = "http://localhost:8000/api";
 
@@ -36,54 +37,64 @@ const initialState: FormState = {
   error: null,
 };
 
-export const fetchGenres = createAsyncThunk<string[], void>(
+export const fetchGenres = createAsyncThunk<string[], void, { rejectValue: string }>(
   "addModalForm/fetchGenres",
   async (_, { rejectWithValue }) => {
-    try {
-      const res = await axios.get(`${API_URL}/genres`);
-      const parsed = GenresSchema.safeParse(res.data);
-      if (!parsed.success) {
-        return rejectWithValue("Invalid genres format received from server");
-      }
-      return parsed.data;
-    } catch {
-      return rejectWithValue("Failed to load genres");
+    const result: Result<string[], string> = await axios
+      .get(`${API_URL}/genres`)
+      .then((res) => {
+        const parsed = GenresSchema.safeParse(res.data);
+        return parsed.success ? ok(parsed.data) : err("Invalid genres format received from server");
+      })
+      .catch(() => err("Failed to load genres"));
+
+    if (result.isErr()) {
+      return rejectWithValue(result.error);
     }
+
+    return result.value;
   }
 );
 
-export const addTrack = createAsyncThunk<TrackType, TrackCreateType>(
+export const addTrack = createAsyncThunk<TrackType, TrackCreateType, { rejectValue: string }>(
   "addModalForm/addTrack",
   async (trackData, { rejectWithValue }) => {
-    try {
-      const res = await axios.post(`${API_URL}/tracks`, trackData);
-      const parsed = TrackSchema.safeParse(res.data);
-      if (!parsed.success) {
-        return rejectWithValue("Invalid track data from server");
-      }
-      return parsed.data;
-    } catch {
-      return rejectWithValue("Failed to add track");
+    const result: Result<TrackType, string> = await axios
+      .post(`${API_URL}/tracks`, trackData)
+      .then((res) => {
+        const parsed = TrackSchema.safeParse(res.data);
+        return parsed.success ? ok(parsed.data) : err("Invalid track data from server");
+      })
+      .catch(() => err("Failed to add track"));
+
+    if (result.isErr()) {
+      return rejectWithValue(result.error);
     }
+
+    return result.value;
   }
 );
 
 export const updateTrack = createAsyncThunk<
   TrackType,
-  { id: string; updatedData: Partial<TrackCreateType> }
+  { id: string; updatedData: Partial<TrackCreateType> },
+  { rejectValue: string }
 >(
   "addModalForm/updateTrack",
   async ({ id, updatedData }, { rejectWithValue }) => {
-    try {
-      const res = await axios.put(`${API_URL}/tracks/${id}`, updatedData);
-      const parsed = TrackSchema.safeParse(res.data);
-      if (!parsed.success) {
-        return rejectWithValue("Invalid updated track data from server");
-      }
-      return parsed.data;
-    } catch {
-      return rejectWithValue("Failed to update track");
+    const result: Result<TrackType, string> = await axios
+      .put(`${API_URL}/tracks/${id}`, updatedData)
+      .then((res) => {
+        const parsed = TrackSchema.safeParse(res.data);
+        return parsed.success ? ok(parsed.data) : err("Invalid updated track data from server");
+      })
+      .catch(() => err("Failed to update track"));
+
+    if (result.isErr()) {
+      return rejectWithValue(result.error);
     }
+
+    return result.value;
   }
 );
 
