@@ -40,7 +40,7 @@ const Track: React.FC<TrackType> = (track) => {
         {track.audioFile && (
           <img
             src={PlayOnCoverIcon}
-            alt="Play icon"
+            alt={`Play icon ${track.id}`}
             className="play-icon"
           />
         )}
