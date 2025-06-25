@@ -1,20 +1,19 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
+import { closeModal, startClosingModal } from '../../redux/form-reducer';
 import {
-  closeModal,
-  startClosingModal,
-  addTrack,
-  updateTrack,
-  fetchGenres,
-} from '../../redux/form-reducer';
-import { fetchAllTracks } from '../../redux/tracks-reducer';
-import { fetchTrackBySlug } from '../../redux/track-modal-reducer';
+  useFetchGenresQuery,
+  useAddTrackMutation,
+  useUpdateTrackMutation,
+} from '../../redux/api/formApi';
+import { useLazyFetchTrackBySlugQuery } from '../../redux/api/trackModalApi';
 import { showToast } from '../../redux/toast-reducer';
 import { RootState, AppDispatch } from '../../redux/redux-store';
+import { openTrackModal } from '../../redux/track-modal-reducer';
+import { tracksApi } from '../../redux/api/tracksApi';
 import './TrackFormModal.css';
-
 
 type TrackFormValues = {
   title: string;
@@ -27,14 +26,14 @@ type TrackFormValues = {
 const TrackFormModal = () => {
   const dispatch = useDispatch<AppDispatch>();
   const state = useSelector((state: RootState) => state.form);
-  const genresList = state.genres;
   const currentTrack = state.currentTrack;
   const selectedGenres = state.selectedGenres;
   const isEdit = !!currentTrack;
 
-  useEffect(() => {
-    dispatch(fetchGenres());
-  }, [dispatch]);
+  const { data: genresList = [] } = useFetchGenresQuery();
+  const [addTrack] = useAddTrackMutation();
+  const [updateTrack] = useUpdateTrackMutation();
+  const [fetchTrackBySlug] = useLazyFetchTrackBySlugQuery();
 
   const handleClose = () => {
     dispatch(startClosingModal());
@@ -60,7 +59,7 @@ const TrackFormModal = () => {
     genres: Yup.array().of(Yup.string()).min(1, 'At least one genre must be selected'),
   });
 
-  const handleSubmit = (
+  const handleSubmit = async (
     values: TrackFormValues,
     { resetForm }: FormikHelpers<TrackFormValues>
   ) => {
@@ -70,59 +69,44 @@ const TrackFormModal = () => {
       return fallback;
     };
 
-    if (isEdit) {
-      dispatch(updateTrack({ id: currentTrack!.id, updatedData: values }))
+    try {
+      const mutation = isEdit
+        ? updateTrack({ id: currentTrack!.id, updatedData: values })
+        : addTrack(values);
+
+      const updatedTrack = await mutation.unwrap();
+
+      // 🔄 оновлюємо список треків
+      dispatch(tracksApi.util.invalidateTags(['Tracks']));
+
+      // 🔄 оновлюємо trackModal, якщо потрібно
+      fetchTrackBySlug(updatedTrack.slug)
         .unwrap()
-        .then((updatedTrack) => {
-          dispatch(fetchAllTracks());
-          dispatch(fetchTrackBySlug(updatedTrack.slug));
-          dispatch(closeModal());
-
-          dispatch(
-            showToast({
-              message: '✅ Track successfully updated!',
-              type: 'success',
-            })
-          );
-
-          resetForm();
-        })
-        .catch((error) => {
-          dispatch(
-            showToast({
-              message: `❌ ${getErrorMessage(error, 'Error when updating a track!')}`,
-              type: 'error',
-            })
-          );
+        .then((refetchedTrack) => {
+          dispatch(openTrackModal({ track: refetchedTrack }));
         });
-    } else {
-      dispatch(addTrack(values))
-        .unwrap()
-        .then((updatedTrack) => {
-          dispatch(fetchAllTracks());
-          dispatch(fetchTrackBySlug(updatedTrack.slug));
-          dispatch(closeModal());
 
-          dispatch(
-            showToast({
-              message: '✅ Track added successfully!',
-              type: 'success',
-            })
-          );
+      dispatch(closeModal());
 
-          resetForm();
+      dispatch(
+        showToast({
+          message: isEdit
+            ? '✅ Track successfully updated!'
+            : '✅ Track added successfully!',
+          type: 'success',
         })
-        .catch((error) => {
-          dispatch(
-            showToast({
-              message: `❌ ${getErrorMessage(error, 'Error adding a track!')}`,
-              type: 'error',
-            })
-          );
-        });
+      );
+
+      resetForm();
+    } catch (error) {
+      dispatch(
+        showToast({
+          message: `❌ ${getErrorMessage(error, isEdit ? 'Error updating track!' : 'Error adding track!')}`,
+          type: 'error',
+        })
+      );
     }
   };
-
 
   if (!state.isModalOpened) return null;
 
