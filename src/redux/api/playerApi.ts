@@ -22,7 +22,7 @@ export const playerApi = createApi({
   reducerPath: 'playerApi',
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://localhost:8000/api',
-    responseHandler: (response) => response.blob(), // очікуємо blob
+    responseHandler: (response) => response.blob(),
   }),
   endpoints: (builder) => ({
     loadTrack: builder.query<CurrentTrack, LoadTrackArgs>({

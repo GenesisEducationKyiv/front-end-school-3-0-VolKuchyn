@@ -30,7 +30,6 @@ const Tracks = () => {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
 
-  // ✅ Авто-навігація при відсутності параметрів
   useEffect(() => {
     const hasQueryParams = location.search && location.search !== '';
 

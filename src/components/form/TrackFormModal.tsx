@@ -76,10 +76,8 @@ const TrackFormModal = () => {
 
       const updatedTrack = await mutation.unwrap();
 
-      // 🔄 оновлюємо список треків
       dispatch(tracksApi.util.invalidateTags(['Tracks']));
 
-      // 🔄 оновлюємо trackModal, якщо потрібно
       fetchTrackBySlug(updatedTrack.slug)
         .unwrap()
         .then((refetchedTrack) => {

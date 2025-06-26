@@ -17,7 +17,6 @@ import reducer, {
 import { formApi } from '../../src/redux/api/formApi';
 import { configureStore } from '@reduxjs/toolkit';
 
-// Тип для тіла запиту addTrack
 type TrackPayload = {
   title: string;
   artist: string;
@@ -44,12 +43,10 @@ const mockResponseData = {
 };
 
 const server = setupServer(
-  // Fetch genres success
   http.get('http://localhost:8000/api/genres', () => {
     return HttpResponse.json(['Rock', 'Jazz']);
   }),
 
-  // Add track success
   http.post('http://localhost:8000/api/tracks', async ({ request }) => {
     const body = (await request.json()) as TrackPayload;
 
@@ -122,10 +119,9 @@ describe('formApi: fetchGenres', () => {
   });
 
   test('returns error on invalid data', async () => {
-    // Overwrite the handler to return invalid data
     server.use(
       http.get('http://localhost:8000/api/genres', () => {
-        return HttpResponse.json(123); // Invalid format
+        return HttpResponse.json(123);
       })
     );
 
@@ -157,7 +153,6 @@ describe('formApi: addTrack', () => {
     });  });
 
   test('returns error on API failure', async () => {
-    // Force server to return error
     server.use(
       http.post('http://localhost:8000/api/tracks', () => {
         return new HttpResponse(null, { status: 500 });

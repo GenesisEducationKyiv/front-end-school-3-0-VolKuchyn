@@ -2,7 +2,6 @@ import { vi, describe, beforeEach, test, expect } from 'vitest';
 import { tracksApi } from '../../src/redux/api/tracksApi';
 import { setupTestStore } from '../test-utils/setupTestStore';
 
-// Мок трек
 const mockTrack = {
   id: '1',
   title: 'Mock Song',

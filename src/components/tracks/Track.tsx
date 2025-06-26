@@ -27,7 +27,6 @@ const Track: React.FC<TrackType> = (track) => {
         id: track.id,
       }).unwrap();
 
-      // 🔊 передаємо трек у плеєр
       dispatch(setCurrentTrack(result));
     } catch (error) {
       console.error('Failed to load track:', error);
