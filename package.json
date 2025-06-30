@@ -10,9 +10,12 @@
     "lint": "eslint ./src/**/*.{ts,tsx,js,jsx}",
     "preview": "vite preview",
     "test": "vitest",
-    "test:watch": "vitest --watch"
+    "test:watch": "vitest --watch",
+    "generate:proto": "npx -p ts-protoc-gen protoc --proto_path=src/proto --js_out=import_style=commonjs,binary:src/grpc --ts_out=src/grpc src/proto/music.proto"
   },
   "dependencies": {
+    "@connectrpc/connect": "^2.0.2",
+    "@connectrpc/connect-web": "^2.0.2",
     "@mobily/ts-belt": "^3.13.1",
     "@reduxjs/toolkit": "^2.7.0",
     "axios": "^1.8.4",
@@ -27,6 +30,10 @@
     "zod": "^3.25.42"
   },
   "devDependencies": {
+    "@bufbuild/buf": "^1.55.1",
+    "@bufbuild/protobuf": "^2.6.0",
+    "@bufbuild/protoc-gen-es": "^2.6.0",
+    "@connectrpc/protoc-gen-connect-es": "^1.5.0",
     "@eslint/js": "^9.22.0",
     "@playwright/test": "^1.53.1",
     "@types/lodash": "^4.17.17",
@@ -36,12 +43,18 @@
     "@typescript-eslint/eslint-plugin": "^8.33.0",
     "@typescript-eslint/parser": "^8.33.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "buf": "^0.1.1",
     "eslint": "^9.28.0",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.19",
     "globals": "^16.0.0",
+    "grpc_tools_node_protoc_ts": "^5.3.3",
+    "grpc-web": "^1.5.0",
     "msw": "^2.10.2",
+    "protoc-gen-grpc-web": "^1.5.0",
+    "protoc-gen-js": "^3.21.4-4",
+    "ts-protoc-gen": "^0.15.0",
     "typescript": "^5.8.3",
     "vite": "^6.3.1",
     "vitest": "^3.2.4"

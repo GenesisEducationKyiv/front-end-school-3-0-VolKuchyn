@@ -2,29 +2,30 @@ import React, { useRef, useEffect, ChangeEvent } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { closeTrackModal, startClosing } from '../../redux/track-modal-reducer';
-import { setCurrentTrack, openModal } from '../../redux/form-reducer'
-
+import {
+  closeTrackModal,
+  startClosing,
+  openTrackModal,
+} from '../../redux/track-modal-reducer';
+import { setCurrentTrack, openModal } from '../../redux/form-reducer';
 import { pauseTrack } from '../../redux/player-reducer';
 import { showToast } from '../../redux/toast-reducer';
 import { showConfirm } from '../../redux/confirm-reducer';
-import ConfirmDialog from '../confirm-dialog/ConfirmDialog';
+import { triggerRefetch } from '../../redux/tracks-reducer';
 
 import { RootState, AppDispatch } from '../../redux/redux-store';
-
-import { openTrackModal } from '../../redux/track-modal-reducer';
 import {
-  useDeleteTrackMutation,
   useUploadAudioFileMutation,
   useDeleteAudioFileMutation,
   tracksApi,
 } from '../../redux/api/tracksApi';
 
-import { useLazyFetchTrackBySlugQuery } from '../../redux/api/trackModalApi';
+import { musicClient } from '../../grpc/api/grpc-api';
 
 import SkeletonTrack from '../tracks/skeletonTrack/SkeletonTrack';
 import Preloader from '../../assets/Preloader';
 import DefaultCover from '../../assets/default-cover.jpg';
+import ConfirmDialog from '../confirm-dialog/ConfirmDialog';
 import './TrackModal.css';
 
 const TrackModal = () => {
@@ -37,10 +38,8 @@ const TrackModal = () => {
     (state: RootState) => state.trackModal
   );
 
-  const [deleteTrack] = useDeleteTrackMutation();
   const [uploadAudioFile, { isLoading: isUploading }] = useUploadAudioFileMutation();
   const [deleteAudioFile] = useDeleteAudioFileMutation();
-  const [fetchTrackBySlug] = useLazyFetchTrackBySlugQuery();
 
   useEffect(() => {
     if (isOpen && track?.slug) {
@@ -59,17 +58,24 @@ const TrackModal = () => {
     setTimeout(() => dispatch(closeTrackModal()), 300);
   };
 
+  const refetchTrack = async (slug: string) => {
+    try {
+      const res = await musicClient.getTrackBySlug({ slug });
+      if (res.track) dispatch(openTrackModal({ track: res.track }));
+    } catch {
+      dispatch(showToast({ message: '❌ Error fetching updated track', type: 'error' }));
+    }
+  };
+
   const handleAudioDelete = () => {
     ConfirmDialog.setOnConfirm(() => {
       deleteAudioFile(track.id)
         .unwrap()
         .then(() => {
           dispatch(showToast({ message: '✅ Audio deleted', type: 'success' }));
-          fetchTrackBySlug(track.slug)
-            .unwrap()
-            .then((updatedTrack) => {
-              dispatch(openTrackModal({ track: updatedTrack }));
-            }); dispatch(tracksApi.util.invalidateTags(['Tracks']));
+          refetchTrack(track.slug);
+          dispatch(triggerRefetch());
+          dispatch(tracksApi.util.invalidateTags(['Tracks']));
         })
         .catch(() => {
           dispatch(showToast({ message: '❌ Error while deleting audio', type: 'error' }));
@@ -80,17 +86,16 @@ const TrackModal = () => {
   };
 
   const handleDeleteTrack = () => {
-    ConfirmDialog.setOnConfirm(() => {
-      deleteTrack(track.id)
-        .unwrap()
-        .then(() => {
-          dispatch(showToast({ message: '🗑️ Track deleted', type: 'success' }));
-          dispatch(closeTrackModal());
-          dispatch(tracksApi.util.invalidateTags(['Tracks']));
-        })
-        .catch(() => {
-          dispatch(showToast({ message: '❌ Error when deleting a track', type: 'error' }));
-        });
+    ConfirmDialog.setOnConfirm(async () => {
+      try {
+        await musicClient.deleteTrack({ id: track.id });
+        dispatch(showToast({ message: '🗑️ Track deleted', type: 'success' }));
+        dispatch(closeTrackModal());
+        dispatch(triggerRefetch());
+        dispatch(tracksApi.util.invalidateTags(['Tracks']));
+      } catch {
+        dispatch(showToast({ message: '❌ Error when deleting a track', type: 'error' }));
+      }
     });
 
     dispatch(showConfirm({ message: 'Do you really want to delete this track?' }));
@@ -137,11 +142,9 @@ const TrackModal = () => {
       .unwrap()
       .then(() => {
         dispatch(showToast({ message: '✅ Audio file uploaded successfully!', type: 'success' }));
-        fetchTrackBySlug(track.slug)
-          .unwrap()
-          .then((updatedTrack) => {
-            dispatch(openTrackModal({ track: updatedTrack }));
-          }); dispatch(tracksApi.util.invalidateTags(['Tracks']));
+        refetchTrack(track.slug);
+        dispatch(triggerRefetch());
+        dispatch(tracksApi.util.invalidateTags(['Tracks']));
       })
       .catch((err: string) => {
         dispatch(showToast({ message: `❌ ${err}`, type: 'error' }));
@@ -171,7 +174,6 @@ const TrackModal = () => {
                 src={track.coverImage || DefaultCover}
                 alt={track.title}
               />
-
               <div className="track-modal-info">
                 <h2>{track.title}</h2>
                 <p>👤 {track.artist}</p>

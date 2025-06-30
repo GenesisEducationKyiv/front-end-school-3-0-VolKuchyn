@@ -1,19 +1,23 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Formik, Form, Field, ErrorMessage, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeModal, startClosingModal } from '../../redux/form-reducer';
-import {
-  useFetchGenresQuery,
-  useAddTrackMutation,
-  useUpdateTrackMutation,
-} from '../../redux/api/formApi';
-import { useLazyFetchTrackBySlugQuery } from '../../redux/api/trackModalApi';
 import { showToast } from '../../redux/toast-reducer';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import { openTrackModal } from '../../redux/track-modal-reducer';
 import { tracksApi } from '../../redux/api/tracksApi';
 import './TrackFormModal.css';
+
+import { musicClient } from '../../grpc/api/grpc-api';
+import {
+  GenresResponse,
+  CreateTrackRequest,
+  UpdateTrackRequest,
+  TrackResponse
+} from '../../grpc/src/proto/music_pb';
+import { triggerRefetch } from '../../redux/tracks-reducer';
+
 
 type TrackFormValues = {
   title: string;
@@ -30,10 +34,20 @@ const TrackFormModal = () => {
   const selectedGenres = state.selectedGenres;
   const isEdit = !!currentTrack;
 
-  const { data: genresList = [] } = useFetchGenresQuery();
-  const [addTrack] = useAddTrackMutation();
-  const [updateTrack] = useUpdateTrackMutation();
-  const [fetchTrackBySlug] = useLazyFetchTrackBySlugQuery();
+  const [genresList, setGenresList] = useState<string[]>([]);
+
+  useEffect(() => {
+    async function fetchGenres() {
+      try {
+        const res = await musicClient.getGenres({});
+        setGenresList(res.genres);
+        console.log(res.genres)
+      } catch (err) {
+        console.error("Помилка при запиті жанрів:", err);
+      }
+    }
+    fetchGenres();
+  }, []);
 
   const handleClose = () => {
     dispatch(startClosingModal());
@@ -70,22 +84,36 @@ const TrackFormModal = () => {
     };
 
     try {
-      const mutation = isEdit
-        ? updateTrack({ id: currentTrack!.id, updatedData: values })
-        : addTrack(values);
+      const payload = {
+        title: values.title,
+        artist: values.artist,
+        album: values.album,
+        genres: values.genres,
+        coverImage: values.coverImage || '',
+      };
 
-      const updatedTrack = await mutation.unwrap();
-
-      dispatch(tracksApi.util.invalidateTags(['Tracks']));
-
-      fetchTrackBySlug(updatedTrack.slug)
-        .unwrap()
-        .then((refetchedTrack) => {
-          dispatch(openTrackModal({ track: refetchedTrack }));
+      let response: TrackResponse;
+      if (isEdit && currentTrack?.id) {
+        response = await musicClient.updateTrack({
+          id: currentTrack.id,
+          ...payload,
+          audioFile: '',
         });
+      } else {
+        response = await musicClient.createTrack(payload as CreateTrackRequest);
+      }
+
+      const updatedTrack = response.track;
+      if (!updatedTrack) throw new Error('UpdatedTrack is undefined');
+
+      const refetched = await musicClient.getTrackBySlug({ slug: updatedTrack.slug });
+      if (!refetched.track) throw new Error('No Track by slug');
+
+      dispatch(openTrackModal({ track: refetched.track }));
+
+      dispatch(triggerRefetch());
 
       dispatch(closeModal());
-
       dispatch(
         showToast({
           message: isEdit
@@ -99,7 +127,10 @@ const TrackFormModal = () => {
     } catch (error) {
       dispatch(
         showToast({
-          message: `❌ ${getErrorMessage(error, isEdit ? 'Error updating track!' : 'Error adding track!')}`,
+          message: `❌ ${getErrorMessage(
+            error,
+            isEdit ? 'Error updating track!' : 'Error adding track!'
+          )}`,
           type: 'error',
         })
       );
@@ -129,24 +160,24 @@ const TrackFormModal = () => {
 
               <label>Title</label>
               <Field name="title" data-testid="input-title" />
-              <ErrorMessage name="title" component="div" className="error" data-testid="error-title" />
+              <ErrorMessage name="title" component="div" className="error" />
 
               <label>Artist</label>
               <Field name="artist" data-testid="input-artist" />
-              <ErrorMessage name="artist" component="div" className="error" data-testid="error-artist" />
+              <ErrorMessage name="artist" component="div" className="error" />
 
               <label>Album</label>
               <Field name="album" data-testid="input-album" />
-              <ErrorMessage name="album" component="div" className="error" data-testid="error-album" />
+              <ErrorMessage name="album" component="div" className="error" />
 
               <label>Cover Image</label>
               <Field name="coverImage" data-testid="input-cover-image" />
-              <ErrorMessage name="coverImage" component="div" className="error" data-testid="error-coverImage" />
+              <ErrorMessage name="coverImage" component="div" className="error" />
 
               <label>Genres</label>
-              <ErrorMessage name="genres" component="div" className="error" data-testid="error-genre" />
+              <ErrorMessage name="genres" component="div" className="error" />
               <div className="genre-list" data-testid="genre-selector">
-                {genresList.map((genre: string) => {
+                {genresList.map((genre) => {
                   const isSelected = values.genres.includes(genre);
                   return (
                     <button

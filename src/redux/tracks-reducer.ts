@@ -1,13 +1,16 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type SortOrder = 'asc' | 'desc';
+
 interface TracksUIState {
   currentPage: number;
   sort: string;
-  order: 'asc' | 'desc';
+  order: SortOrder;
   search: string;
   genre: string;
   artist: string;
   uploadingTrackId: string | null;
+  shouldRefetch: boolean;
 }
 
 const initialState: TracksUIState = {
@@ -18,6 +21,7 @@ const initialState: TracksUIState = {
   genre: '',
   artist: '',
   uploadingTrackId: null,
+  shouldRefetch: false,
 };
 
 export const tracksSlice = createSlice({
@@ -31,7 +35,7 @@ export const tracksSlice = createSlice({
       state.sort = action.payload;
       state.currentPage = 1;
     },
-    setOrder(state, action: PayloadAction<'asc' | 'desc'>) {
+    setOrder(state, action: PayloadAction<SortOrder>) {
       state.order = action.payload;
       state.currentPage = 1;
     },
@@ -50,6 +54,12 @@ export const tracksSlice = createSlice({
     setUploadingTrackId(state, action: PayloadAction<string | null>) {
       state.uploadingTrackId = action.payload;
     },
+    triggerRefetch(state) {
+      state.shouldRefetch = true;
+    },
+    resetRefetch(state) {
+      state.shouldRefetch = false;
+    },
   },
 });
 
@@ -61,6 +71,8 @@ export const {
   setGenre,
   setArtist,
   setUploadingTrackId,
+  triggerRefetch,
+  resetRefetch,
 } = tracksSlice.actions;
 
 export default tracksSlice.reducer;

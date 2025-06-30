@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../redux/redux-store';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
-
-import { useFetchTracksQuery } from '../../redux/api/tracksApi';
-import { useFetchGenresQuery } from '../../redux/api/formApi';
-import { useFetchTrackBySlugQuery } from '../../redux/api/trackModalApi';
+import {
+  setGenre, setOrder, setPage, setSearch, setSort, resetRefetch
+} from '../../redux/tracks-reducer';
 import { openModal } from '../../redux/form-reducer';
-
-import Track from './Track';
+import { musicClient } from '../../grpc/api/grpc-api';
+import { Track, TrackListResponse } from '../../grpc/src/proto/music_pb';
+import TrackCard from './Track';
 import SkeletonTrack from './skeletonTrack/SkeletonTrack';
 import NoTracksImage from '../../assets/no-tracks-found.png';
 import FilterAsc from '../../assets/sort-ascending-svgrepo-com.svg';
@@ -24,56 +24,25 @@ const Tracks = () => {
   const { slug } = useParams<{ slug?: string }>();
   const isPlayer = useSelector((state: RootState) => state.player.currentTrack);
 
-  const [sort, setSort] = useState('');
-  const [order, setOrder] = useState<'asc' | 'desc'>('desc');
-  const [genre, setGenre] = useState('');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-
-  useEffect(() => {
-    const hasQueryParams = location.search && location.search !== '';
-
-    if (!hasQueryParams) {
-      const params = new URLSearchParams();
-      params.set('sort', 'createdAt');
-      params.set('order', 'desc');
-      navigate({ search: params.toString() }, { replace: true });
-    }
-  }, [location.search, navigate]);
-
   const {
-    data: genres = [],
-    isLoading: genresLoading,
-  } = useFetchGenresQuery();
+    sort, order, genre, search, currentPage, shouldRefetch
+  } = useSelector((state: RootState) => state.tracks);
 
-  const {
-    data,
-    isLoading: tracksLoading,
-  } = useFetchTracksQuery({
-    genre,
-    sort,
-    order,
-    search,
-    page: String(page),
-  });
-
-  const tracks = data?.data || [];
-  const meta = data?.meta;
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [genres, setGenres] = useState<string[]>([]);
+  const [meta, setMeta] = useState<TrackListResponse | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const sortParam = params.get('sort') || 'createdAt';
-    const orderParam = (params.get('order') || 'desc') as 'asc' | 'desc';
-    const genreParam = params.get('genre') || '';
-    const searchParam = params.get('search') || '';
-    const pageParam = parseInt(params.get('page') || '1', 10);
-
-    setSort(sortParam);
-    setOrder(orderParam);
-    setGenre(genreParam);
-    setSearch(searchParam);
-    setPage(pageParam > 0 ? pageParam : 1);
-  }, [location.search]);
+    dispatch(setSort(params.get('sort') || 'createdAt'));
+    dispatch(setOrder((params.get('order') || 'desc') as 'asc' | 'desc'));
+    dispatch(setGenre(params.get('genre') || ''));
+    dispatch(setSearch(params.get('search') || ''));
+    dispatch(setPage(parseInt(params.get('page') || '1', 10)));
+    setIsInitialized(true);
+  }, [location.search, dispatch]);
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -81,21 +50,56 @@ const Tracks = () => {
     if (sort) params.set('sort', sort);
     if (order) params.set('order', order);
     if (search) params.set('search', search);
-    if (page > 1) params.set('page', String(page));
+    if (currentPage > 1) params.set('page', String(currentPage));
     navigate({ search: params.toString() }, { replace: true });
-  }, [genre, sort, order, search, page, navigate]);
+  }, [genre, sort, order, search, currentPage, navigate]);
 
-  const {
-    data: selectedTrack,
-    isLoading: isSlugLoading,
-    error: slugError,
-  } = useFetchTrackBySlugQuery(slug ?? '', {
-    skip: !slug,
-  });
+  useEffect(() => {
+    const fetchGenres = async () => {
+      try {
+        const res = await musicClient.getGenres({});
+        setGenres(res.genres ?? []);
+      } catch (error) {
+        console.error('gRPC Genre Fetch Error:', error);
+      }
+    };
+    fetchGenres();
+  }, []);
+
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const fetchTracks = async () => {
+      setLoading(true);
+      try {
+        const response = await musicClient.getTracks({
+          genre,
+          sort,
+          order,
+          search,
+          page: currentPage,
+          limit: 10,
+        });
+        setTracks(response.tracks ?? []);
+        setMeta(response);
+
+        if (shouldRefetch) {
+          dispatch(resetRefetch());
+        }
+      } catch (error) {
+        console.error('gRPC Track Fetch Error:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTracks();
+  }, [genre, sort, order, search, currentPage, shouldRefetch, dispatch, isInitialized]);
 
   const handlePaginator = (newPage: number) => {
     if (newPage >= 1 && (!meta || newPage <= meta.totalPages)) {
-      setPage(newPage);
+      dispatch(setPage(newPage));
     }
   };
 
@@ -106,7 +110,7 @@ const Tracks = () => {
           className="add-track-button"
           data-testid="create-track-button"
           onClick={() => dispatch(openModal())}
-          disabled={tracksLoading}
+          disabled={loading}
         >
           + Add Track
         </button>
@@ -114,9 +118,9 @@ const Tracks = () => {
         <select
           className="filter-select"
           value={genre}
-          onChange={(e) => setGenre(e.target.value)}
+          onChange={(e) => dispatch(setGenre(e.target.value))}
           data-testid="filter-genre"
-          disabled={tracksLoading || genresLoading}
+          disabled={loading}
         >
           <option value="">All genres</option>
           {genres.map((g) => (
@@ -129,9 +133,9 @@ const Tracks = () => {
         <select
           className="filter-select"
           value={sort}
-          onChange={(e) => setSort(e.target.value)}
+          onChange={(e) => dispatch(setSort(e.target.value))}
           data-testid="sort-select"
-          disabled={tracksLoading}
+          disabled={loading}
         >
           <option value="createdAt">Date Created</option>
           <option value="title">Title</option>
@@ -141,9 +145,9 @@ const Tracks = () => {
 
         <button
           className="sort-order-btn"
-          onClick={() => setOrder(order === 'asc' ? 'desc' : 'asc')}
+          onClick={() => dispatch(setOrder(order === 'asc' ? 'desc' : 'asc'))}
           title={`Sort ${order === 'asc' ? 'descending' : 'ascending'}`}
-          disabled={tracksLoading}
+          disabled={loading}
         >
           <img
             src={order === 'asc' ? FilterAsc : FilterDesc}
@@ -156,8 +160,8 @@ const Tracks = () => {
       {meta && meta.total > 10 && (
         <div className="pagination-buttons" data-testid="pagination">
           <button
-            onClick={() => handlePaginator(page - 1)}
-            disabled={page <= 1 || tracksLoading}
+            onClick={() => handlePaginator(currentPage - 1)}
+            disabled={currentPage <= 1 || loading}
             className="pagination-button"
             data-testid="pagination-prev"
           >
@@ -165,12 +169,12 @@ const Tracks = () => {
           </button>
 
           <p>
-            Page {page} / {meta.totalPages}
+            Page {currentPage} / {meta.totalPages}
           </p>
 
           <button
-            onClick={() => handlePaginator(page + 1)}
-            disabled={page >= meta.totalPages || tracksLoading}
+            onClick={() => handlePaginator(currentPage + 1)}
+            disabled={currentPage >= meta.totalPages || loading}
             className="pagination-button"
             data-testid="pagination-next"
           >
@@ -179,7 +183,7 @@ const Tracks = () => {
         </div>
       )}
 
-      {tracksLoading && (
+      {loading && (
         <>
           <SkeletonTrack />
           <SkeletonTrack />
@@ -187,10 +191,9 @@ const Tracks = () => {
         </>
       )}
 
-      {!tracksLoading &&
-        tracks.map((track) => <Track key={track.id} {...track} />)}
+      {!loading && tracks.map((track) => <TrackCard key={track.id} {...track} />)}
 
-      {!tracksLoading && tracks.length === 0 && (
+      {!loading && tracks.length === 0 && (
         <div className="no-tracks">
           <img src={NoTracksImage} alt="no-image" />
         </div>

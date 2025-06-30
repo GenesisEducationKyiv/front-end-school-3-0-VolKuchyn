@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package music;
+
+service MusicService {
+  rpc GetGenres(Empty) returns (GenresResponse);
+  rpc GetTracks(TrackQuery) returns (TrackListResponse);
+  rpc GetTrackBySlug(SlugRequest) returns (TrackResponse);
+  rpc CreateTrack(CreateTrackRequest) returns (TrackResponse);
+  rpc UpdateTrack(UpdateTrackRequest) returns (TrackResponse);
+  rpc DeleteTrack(IdRequest) returns (Empty);
+  rpc DeleteMultipleTracks(DeleteTracksRequest) returns (DeleteTracksResponse);
+
+  rpc UploadTrackAudio(stream UploadAudioChunk) returns (UploadAudioResponse);
+  rpc DeleteTrackAudio(IdRequest) returns (UploadAudioResponse);
+}
+
+message Empty {}
+
+message IdRequest {
+  string id = 1;
+}
+
+message SlugRequest {
+  string slug = 1;
+}
+
+message GenresResponse {
+  repeated string genres = 1;
+}
+
+message Track {
+  string id = 1;
+  string title = 2;
+  string artist = 3;
+  string album = 4;
+  repeated string genres = 5;
+  string slug = 6;
+  string coverImage = 7;
+  string audioFile = 8;
+  string createdAt = 9;
+  string updatedAt = 10;
+}
+
+message TrackQuery {
+  int32 page = 1;
+  int32 limit = 2;
+  string sort = 3;
+  string order = 4;
+  string search = 5;
+  string genre = 6;
+  string artist = 7;
+}
+
+message TrackListResponse {
+  repeated Track tracks = 1;
+  int32 total = 2;
+  int32 page = 3;
+  int32 limit = 4;
+  int32 totalPages = 5;
+}
+
+message CreateTrackRequest {
+  string title = 1;
+  string artist = 2;
+  string album = 3;
+  repeated string genres = 4;
+  string coverImage = 5;
+}
+
+message UpdateTrackRequest {
+  string id = 1;
+  string title = 2;
+  string artist = 3;
+  string album = 4;
+  repeated string genres = 5;
+  string coverImage = 6;
+  string audioFile = 7;
+}
+
+message TrackResponse {
+  Track track = 1;
+}
+
+message DeleteTracksRequest {
+  repeated string ids = 1;
+}
+
+message DeleteTracksResponse {
+  repeated string success = 1;
+  repeated string failed = 2;
+}
+
+message UploadAudioChunk {
+  string id = 1;
+  string filename = 2;
+  bytes data = 3;
+}
+
+message UploadAudioResponse {
+  string message = 1;
+  string fileName = 2;
+}
