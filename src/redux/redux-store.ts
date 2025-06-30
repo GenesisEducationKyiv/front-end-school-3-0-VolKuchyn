@@ -7,7 +7,7 @@ import playerReducer from './player-reducer';
 import trackModalReducer from './track-modal-reducer';
 import confirmReducer from './confirm-reducer';
 
-const rootReducer = combineReducers({
+export const rootReducer = combineReducers({
   tracks: tracksReducer,
   form: formReducer,
   toast: toastReducer,

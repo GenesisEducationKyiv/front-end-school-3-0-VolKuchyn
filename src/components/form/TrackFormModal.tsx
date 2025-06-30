@@ -50,8 +50,8 @@ const TrackFormModal = () => {
   };
 
   const validationSchema = Yup.object({
-    title: Yup.string().required('Required!'),
-    artist: Yup.string().required('Required!'),
+    title: Yup.string().required('Title is required!'),
+    artist: Yup.string().required('Artist is required!'),
     album: Yup.string(),
     coverImage: Yup.string()
       .url('Wrong URL')
