@@ -7,6 +7,8 @@ import reducer, {
   addTrack,
 } from '../../src/redux/form-reducer';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 vi.mock('axios');
 const mockedAxios = axios as unknown as {
   get: ReturnType<typeof vi.fn>;
@@ -57,7 +59,7 @@ describe('fetchGenres unit test', () => {
 
     const result = await thunk(dispatch, () => ({}), undefined);
 
-    expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8000/api/genres');
+    expect(mockedAxios.get).toHaveBeenCalledWith(`${API_URL}/genres`);
     expect(result.payload).toEqual(['Rock', 'Jazz']);
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addModalForm/fetchGenres/pending' }));
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addModalForm/fetchGenres/fulfilled' }));
@@ -105,7 +107,7 @@ describe('Thunk: addTrack', () => {
     const result = await thunk(dispatch, () => ({}), undefined);
 
     expect(mockedAxios.post).toHaveBeenCalledWith(
-      'http://localhost:8000/api/tracks',
+      `${API_URL}/tracks`,
       mockTrackData
     );
     expect(result.payload).toEqual(mockResponseData);

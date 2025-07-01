@@ -6,6 +6,8 @@ import { RootState, AppDispatch } from '../../redux/redux-store';
 import HeaderLogo from '../../assets/music-library-by-volodymyr-kuchynskyi.svg';
 import './Header.css';
 
+const PORT_URL = import.meta.env.RUN_PORT;
+
 const Header = () => {
     const dispatch: AppDispatch = useDispatch();
     const searchFromRedux = useSelector((state: RootState) => state.tracks.search);
@@ -34,7 +36,7 @@ const Header = () => {
 
     return (
         <header className="app-header" data-testid="tracks-header">
-            <a href="http://localhost:3000/">
+            <a href={PORT_URL}>
                 <img
                     src={HeaderLogo}
                     alt=""
