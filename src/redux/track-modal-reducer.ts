@@ -4,6 +4,9 @@ import { TrackType } from '../types/track-type';
 import { TrackSchema } from '../schemas/track-schema';
 import { Result, err, ok } from 'neverthrow';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+
 interface TrackModalState {
   isOpen: boolean;
   isClosing: boolean;
@@ -22,7 +25,7 @@ const initialState: TrackModalState = {
 
 const fetchTrackBySlugSafe = async (slug: string): Promise<Result<TrackType, string>> => {
   try {
-    const res = await axios.get(`http://localhost:8000/api/tracks/${slug}`);
+    const res = await axios.get(`${API_URL}/tracks/${slug}`);
     const parsed = TrackSchema.safeParse(res.data);
 
     if (!parsed.success) {
