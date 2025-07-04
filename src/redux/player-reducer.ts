@@ -2,6 +2,8 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios, { AxiosError } from 'axios';
 import { ok, err, Result } from 'neverthrow';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 interface CurrentTrack {
     file: string;
     url: string;
@@ -58,7 +60,7 @@ export const loadTrack = createAsyncThunk<
     currentTrackAbortController = new AbortController();
 
     const result: Result<CurrentTrack, string> = await axios
-        .get(`http://localhost:8000/api/files/${fileName}`, {
+        .get(`${API_URL}/files/${fileName}`, {
             responseType: 'blob',
             signal: currentTrackAbortController.signal,
         })

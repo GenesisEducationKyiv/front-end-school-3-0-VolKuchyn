@@ -15,6 +15,8 @@ import './TrackModal.css';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import { useDispatch } from 'react-redux';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const TrackModal = () => {
   const dispatch = useDispatch<AppDispatch>(); 
   const { track, isOpen, isClosing, isLoading } = useSelector((state: RootState) => state.trackModal);
@@ -164,7 +166,7 @@ const TrackModal = () => {
                 <audio
                   onPlay={() => dispatch(pauseTrack())}
                   controls
-                  src={`http://localhost:8000/api/files/${track.audioFile}`}
+                  src={`${API_URL}/files/${track.audioFile}`}
                 />
                 <button
                   onClick={handleAudioDelete}
