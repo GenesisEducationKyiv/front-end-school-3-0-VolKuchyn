@@ -16,6 +16,7 @@
     "@mobily/ts-belt": "^3.13.1",
     "@reduxjs/toolkit": "^2.7.0",
     "axios": "^1.8.4",
+    "express": "^5.1.0",
     "formik": "^2.4.6",
     "lodash": "^4.17.21",
     "neverthrow": "^8.2.0",

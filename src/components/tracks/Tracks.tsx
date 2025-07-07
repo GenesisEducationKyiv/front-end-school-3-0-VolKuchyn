@@ -12,7 +12,7 @@ import FilterDesc from '../../assets/sort-descending-svgrepo-com.svg';
 import LeftArrow from '../../assets/left-arrow.svg';
 import RightArrow from '../../assets/right-arrow.svg';
 import SkeletonTrack from './skeletonTrack/SkeletonTrack';
-import NoTracksImage from '../../assets/no-tracks-found.png';
+import NoTracksImage from '../../assets/no-tracks-found.webp';
 import './Tracks.css';
 
 const Tracks = () => {
@@ -97,11 +97,16 @@ const Tracks = () => {
             data-loading={tracksState.isTracksLoading}
             disabled={tracksState.isTracksLoading}
             aria-disabled={tracksState.isTracksLoading}
+            aria-label="Add Track"
           >
             + Add Track
           </button>
 
+          <label htmlFor="filter-genre-select" className="sr-only">
+            Filter by genre
+          </label>
           <select
+            id="filter-genre-select"
             className="filter-select"
             value={tracksState.genre}
             onChange={(e) => dispatch(setGenre(e.target.value))}
@@ -118,7 +123,11 @@ const Tracks = () => {
             ))}
           </select>
 
+          <label htmlFor="sort-select" className="sr-only">
+            Sort by
+          </label>
           <select
+            id="sort-select"
             className="filter-select"
             value={tracksState.sort}
             onChange={(e) => dispatch(setSort(e.target.value))}
@@ -142,6 +151,9 @@ const Tracks = () => {
             data-loading={tracksState.isTracksLoading}
             disabled={tracksState.isTracksLoading}
             aria-disabled={tracksState.isTracksLoading}
+            aria-pressed={tracksState.order === 'asc'}
+            aria-label={`Toggle sort order to ${tracksState.order === 'asc' ? 'descending' : 'ascending'
+              }`}
           >
             <img
               src={tracksState.order === 'asc' ? FilterAsc : FilterDesc}

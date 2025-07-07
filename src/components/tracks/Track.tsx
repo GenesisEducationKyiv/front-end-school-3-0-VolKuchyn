@@ -2,8 +2,8 @@ import './Track.css';
 import { useDispatch } from 'react-redux';
 import { loadTrack } from '../../redux/player-reducer';
 import { openTrackModal } from '../../redux/track-modal-reducer';
-import DefaultCover from '../../assets/default-cover.jpg';
-import PlayOnCoverIcon from '../../assets/play-on-cover-icon.png';
+import DefaultCover from '../../assets/default-cover.webp';
+import PlayOnCoverIcon from '../../assets/play-on-cover-icon.webp';
 import { AppDispatch } from '../../redux/redux-store';
 import React from 'react';
 
