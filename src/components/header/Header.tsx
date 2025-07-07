@@ -37,7 +37,7 @@ const Header = () => {
             <a href="http://localhost:3000/">
                 <img
                     src={HeaderLogo}
-                    alt=""
+                    alt="Logo"
                     className="header-logo"
                     title="Made by Volodymyr Kuchynskyi"
                 />

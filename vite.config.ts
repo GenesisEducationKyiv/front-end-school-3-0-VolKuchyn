@@ -9,4 +9,7 @@ export default defineConfig({
   test: {
     exclude: ['tests/playwright/**', 'node_modules/**'],
   },
+  build: {
+    sourcemap: true,
+  },
 });

@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Preloader from '../../assets/Preloader';
 import ConfirmDialog from '../confirm-dialog/ConfirmDialog';
 import SkeletonTrack from '../tracks/skeletonTrack/SkeletonTrack';
-import DefaultCover from '../../assets/default-cover.jpg';
+import DefaultCover from '../../assets/default-cover.webp';
 import './TrackModal.css';
 import { RootState, AppDispatch } from '../../redux/redux-store';
 import { useDispatch } from 'react-redux';
