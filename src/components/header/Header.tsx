@@ -6,6 +6,8 @@ import { RootState, AppDispatch } from '../../redux/redux-store';
 import HeaderLogo from '../../assets/music-library-by-volodymyr-kuchynskyi.svg';
 import './Header.css';
 
+import { SearchInput } from './SearchInput/SearchInput';
+
 const Header = () => {
     const dispatch: AppDispatch = useDispatch();
     const searchFromRedux = useSelector((state: RootState) => state.tracks.search);
@@ -43,15 +45,12 @@ const Header = () => {
                 />
             </a>
 
-            <input
-                type="text"
-                className="header-search"
-                placeholder="Search..."
+            <SearchInput
                 value={localSearch}
                 onChange={handleChange}
+                placeholder="Search..."
                 data-testid="search-input"
             />
-
         </header>
     );
 };
