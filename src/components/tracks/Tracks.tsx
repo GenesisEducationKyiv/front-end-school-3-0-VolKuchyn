@@ -14,6 +14,9 @@ import RightArrow from '../../assets/right-arrow.svg';
 import SkeletonTrack from './skeletonTrack/SkeletonTrack';
 import NoTracksImage from '../../assets/no-tracks-found.png';
 import './Tracks.css';
+import { FilterSelect } from './FilterSelect/FilterSelect';
+
+import { ButtonAddTrack } from './ButtonAddTrack/ButtonAddTrack';
 
 const Tracks = () => {
   const dispatch: AppDispatch = useDispatch();
@@ -90,48 +93,31 @@ const Tracks = () => {
     <>
       <div>
         <div className="filters">
-          <button
-            className="add-track-button"
-            data-testid="create-track-button"
+          <ButtonAddTrack
             onClick={() => dispatch(openModal())}
-            data-loading={tracksState.isTracksLoading}
             disabled={tracksState.isTracksLoading}
-            aria-disabled={tracksState.isTracksLoading}
-          >
-            + Add Track
-          </button>
+            loading={tracksState.isTracksLoading}
+          />
 
-          <select
-            className="filter-select"
+          <FilterSelect
             value={tracksState.genre}
             onChange={(e) => dispatch(setGenre(e.target.value))}
-            data-testid="filter-genre"
-            data-loading={tracksState.isTracksLoading}
+            options={['', ...genres]}
             disabled={tracksState.isTracksLoading}
+            data-loading={tracksState.isTracksLoading}
             aria-disabled={tracksState.isTracksLoading}
-          >
-            <option value="">All genres</option>
-            {genres.map((g) => (
-              <option key={g} value={g}>
-                {g}
-              </option>
-            ))}
-          </select>
+            data-testid="filter-genre"
+          />
 
-          <select
-            className="filter-select"
+          <FilterSelect
             value={tracksState.sort}
             onChange={(e) => dispatch(setSort(e.target.value))}
-            data-testid="sort-select"
-            data-loading={tracksState.isTracksLoading}
+            options={['createdAt', 'title', 'artist', 'album']}
             disabled={tracksState.isTracksLoading}
+            data-loading={tracksState.isTracksLoading}
             aria-disabled={tracksState.isTracksLoading}
-          >
-            <option value="createdAt">Date Created</option>
-            <option value="title">Title</option>
-            <option value="artist">Artist</option>
-            <option value="album">Album</option>
-          </select>
+            data-testid="sort-select"
+          />
 
           <button
             className="sort-order-btn"

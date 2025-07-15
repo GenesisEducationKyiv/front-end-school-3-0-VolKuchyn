@@ -1,0 +1,16 @@
+.header-search {
+    padding: 8px 12px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    width: 100%;
+    max-width: 300px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: 'Roboto', sans-serif;
+}
+
+.header-search:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
