@@ -33,13 +33,13 @@ const mockTrackData: TrackPayload = {
   genres: ['Rock'],
 };
 
-const mockResponseData = {
-  id: '1',
-  ...mockTrackData,
-  slug: 'test-song',
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
-  audioFile: null,
+const API_URL = import.meta.env.VITE_API_URL;
+
+vi.mock('axios');
+const mockedAxios = axios as unknown as {
+  get: ReturnType<typeof vi.fn>;
+  post: ReturnType<typeof vi.fn>;
+
 };
 
 const server = setupServer(
@@ -115,7 +115,11 @@ describe('formApi: fetchGenres', () => {
       formApi.endpoints.fetchGenres.initiate()
     );
 
-    expect(result.data).toEqual(['Rock', 'Jazz']);
+    expect(mockedAxios.get).toHaveBeenCalledWith(`${API_URL}/genres`);
+    expect(result.payload).toEqual(['Rock', 'Jazz']);
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addModalForm/fetchGenres/pending' }));
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: 'addModalForm/fetchGenres/fulfilled' }));
+
   });
 
   test('returns error on invalid data', async () => {
@@ -140,9 +144,16 @@ describe('formApi: addTrack', () => {
     store = setupTestStore();
   });
 
-  test('returns track on valid input', async () => {
-    const result = await store.dispatch(
-      formApi.endpoints.addTrack.initiate(mockTrackData)
+  test('dispatches fulfilled on valid track', async () => {
+    mockedAxios.post.mockResolvedValueOnce({ data: mockResponseData });
+
+    const thunk = addTrack(mockTrackData);
+    const result = await thunk(dispatch, () => ({}), undefined);
+
+    expect(mockedAxios.post).toHaveBeenCalledWith(
+      `${API_URL}/tracks`,
+      mockTrackData
+
     );
 
     expect(result.data).toMatchObject({

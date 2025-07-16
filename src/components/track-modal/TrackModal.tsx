@@ -27,8 +27,15 @@ import Preloader from '../../assets/Preloader';
 import DefaultCover from '../../assets/default-cover.jpg';
 import './TrackModal.css';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const TrackModal = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const { track, isOpen, isClosing, isLoading } = useSelector((state: RootState) => state.trackModal);
+  const { uploadingTrackId } = useSelector((state: RootState) => state.tracks);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+
   const navigate = useNavigate();
   const location = useLocation();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -44,11 +51,11 @@ const TrackModal = () => {
 
   useEffect(() => {
     if (isOpen && track?.slug) {
-      navigate(`/tracks/${track.slug}`, { replace: false });
+      navigate(`/tracks/${track.slug}`, { replace: true });
     }
 
     if (!isOpen && location.pathname.startsWith('/tracks/') && location.pathname !== '/tracks') {
-      navigate('/tracks', { replace: false });
+      navigate('/tracks', { replace: true });
     }
   }, [isOpen, track?.slug, navigate, location.pathname]);
 
@@ -101,8 +108,13 @@ const TrackModal = () => {
     dispatch(openModal());
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
+  const handleOverlayClick = () => {
+    dispatch(startClosing());
+    setTimeout(() => {
+      dispatch(closeTrackModal());
+      navigate('/tracks', { replace: true });
+    }, 300);
+
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +202,7 @@ const TrackModal = () => {
                 <audio
                   onPlay={() => dispatch(pauseTrack())}
                   controls
-                  src={`http://localhost:8000/api/files/${track.audioFile}`}
+                  src={`${API_URL}/files/${track.audioFile}`}
                 />
                 <button
                   onClick={handleAudioDelete}

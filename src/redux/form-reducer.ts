@@ -1,5 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TrackType } from '../schemas/track-schema';
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import axios from "axios";
+import { z } from "zod";
+import {
+  TrackSchema,
+  type TrackType,
+  type TrackCreateType,
+} from "../schemas/track-schema";
+import { ok, err, Result } from "neverthrow";
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+const GenresSchema = z.array(z.string());
+
 
 interface FormState {
   selectedGenres: string[];

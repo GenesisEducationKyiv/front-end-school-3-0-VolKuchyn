@@ -1,13 +1,32 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import axios from "axios";
+import { Result, ok, err } from "neverthrow";
+import { RootState } from "./redux-store";
+import {
+    TracksResponseSchema,
+    type TrackType,
+    type TracksMeta,
+} from "../schemas/track-schema";
+import { O } from "@mobily/ts-belt";
 
-interface TracksUIState {
-  currentPage: number;
-  sort: string;
-  order: 'asc' | 'desc';
-  search: string;
-  genre: string;
-  artist: string;
-  uploadingTrackId: string | null;
+
+const API_URL = import.meta.env.VITE_API_URL;
+
+interface TracksState {
+    tracks: TrackType[];
+    length: number;
+    currentPage: number;
+    totalPages: number;
+    paginationLength: number;
+    sort: string;
+    order: "asc" | "desc";
+    search: string;
+    genre: string;
+    artist: string;
+    isTracksLoading: boolean;
+    uploadingTrackId: string | null;
+    error: string | null;
+
 }
 
 const initialState: TracksUIState = {
