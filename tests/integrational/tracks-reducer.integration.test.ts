@@ -1,11 +1,6 @@
 import { vi, describe, beforeEach, test, expect } from 'vitest';
-import axios from 'axios';
-import { fetchAllTracks } from '../../src/redux/tracks-reducer';
-import { setupTestStore, TestRootState, TestDispatch } from '../test-utils/setupTestStore';
-
-vi.mock('axios');
-
-const mockedAxios = vi.mocked(axios);
+import { tracksApi } from '../../src/redux/api/tracksApi';
+import { setupTestStore } from '../test-utils/setupTestStore';
 
 const mockTrack = {
   id: '1',
@@ -20,30 +15,55 @@ const mockTrack = {
   audioFile: null,
 };
 
-describe('Integration: Redux logic - fetchAllTracks', () => {
+describe('Integration: tracksApi.fetchTracks', () => {
   let store: ReturnType<typeof setupTestStore>;
-  let dispatch: TestDispatch;
 
   beforeEach(() => {
     vi.clearAllMocks();
     store = setupTestStore();
-    dispatch = store.dispatch;
   });
 
-  test('fetchAllTracks updates state when API succeeds', async () => {
-    (mockedAxios.get as unknown as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      data: {
-        data: [mockTrack],
-        meta: { total: 1, totalPages: 1, page: 1, limit: 10 },
-      },
-    });
+  test('fetchTracks returns data and updates cache on success', async () => {
+    vi.stubGlobal('fetch', vi.fn(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify({
+            data: [mockTrack],
+            meta: { total: 1, totalPages: 1, page: 1, limit: 10 },
+          }),
+          {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }
+        )
+      )
+    ));
 
-    await dispatch(fetchAllTracks());
-    const state: TestRootState = store.getState();
+    const result = await store.dispatch(
+      tracksApi.endpoints.fetchTracks.initiate({ page: '1' })
+    );
 
-    expect(state.tracks.tracks.length).toBe(1);
-    expect(state.tracks.tracks[0].title).toBe('Mock Song');
-    expect(state.tracks.totalPages).toBe(1);
-    expect(state.tracks.isTracksLoading).toBe(false);
+    expect(result.data).toBeDefined();
+    expect(result.data?.data.length).toBe(1);
+    expect(result.data?.data[0].title).toBe('Mock Song');
+
+    const state = store.getState();
+    const cached = tracksApi.endpoints.fetchTracks.select({ page: '1' })(state);
+
+    expect(cached?.data?.meta.totalPages).toBe(1);
+    expect(cached?.data?.data[0].id).toBe('1');
+  });
+
+  test('fetchTracks returns error on API failure', async () => {
+    vi.stubGlobal('fetch', vi.fn(() =>
+      Promise.reject(new Error('API failure'))
+    ));
+
+    const result = await store.dispatch(
+      tracksApi.endpoints.fetchTracks.initiate({ page: '1' })
+    );
+
+    expect(result.error).toBeDefined();
+    expect('data' in result).toBe(false);
   });
 });
