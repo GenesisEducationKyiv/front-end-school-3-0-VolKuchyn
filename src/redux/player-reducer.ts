@@ -12,18 +12,19 @@ interface CurrentTrack {
     id: string;
 }
 
+
 interface PlayerState {
-    currentTrack: CurrentTrack | null;
-    isPlaying: boolean;
-    isLoading: boolean;
-    error: string | null;
+  currentTrack: CurrentTrack | null;
+  isPlaying: boolean;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: PlayerState = {
-    currentTrack: null,
-    isPlaying: false,
-    isLoading: false,
-    error: null,
+  currentTrack: null,
+  isPlaying: false,
+  isLoading: false,
+  error: null,
 };
 
 let currentTrackAbortController: AbortController | null = null;
@@ -108,28 +109,34 @@ const playerReducer = createSlice({
             state.isPlaying = false;
         },
     },
-    extraReducers: (builder) => {
-        builder
-            .addCase(loadTrack.pending, (state) => {
-                state.isLoading = true;
-                state.error = null;
-                state.currentTrack = null;
-                state.isPlaying = false;
-            })
-            .addCase(loadTrack.fulfilled, (state, action: PayloadAction<CurrentTrack>) => {
-                state.currentTrack = action.payload;
-                state.isPlaying = true;
-                state.isLoading = false;
-            })
-            .addCase(loadTrack.rejected, (state, action) => {
-                if (action.payload === 'Cancelled') {
-                    return;
-                }
-                state.error = action.payload as string;
-                state.isLoading = false;
-            });
+    stopTrack(state) {
+      state.currentTrack = null;
+      state.isPlaying = false;
     },
+    pauseTrack(state) {
+      state.isPlaying = false;
+    },
+    setCurrentTrack(state, action) {
+      state.currentTrack = action.payload;
+      state.isPlaying = true;
+      state.isLoading = false;
+    },
+    setLoading(state, action) {
+      state.isLoading = action.payload;
+    },
+    setError(state, action) {
+      state.error = action.payload;
+    },
+  },
 });
 
-export const { togglePlay, stopTrack, pauseTrack } = playerReducer.actions;
-export default playerReducer.reducer;
+export const {
+  togglePlay,
+  stopTrack,
+  pauseTrack,
+  setCurrentTrack,
+  setLoading,
+  setError,
+} = playerSlice.actions;
+
+export default playerSlice.reducer;

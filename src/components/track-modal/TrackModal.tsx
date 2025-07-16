@@ -1,19 +1,31 @@
 import React, { useRef, useEffect, ChangeEvent } from 'react';
-import { useSelector } from 'react-redux';
-import { closeTrackModal, fetchTrackBySlug, startClosing } from '../../redux/track-modal-reducer';
-import { deleteAudioFile, deleteTrack, fetchAllTracks, uploadAudioFile } from '../../redux/tracks-reducer';
-import { showToast } from '../../redux/toast-reducer';
-import { setCurrentTrack, openModal } from '../../redux/form-reducer';
-import { pauseTrack } from '../../redux/player-reducer';
-import { showConfirm } from '../../redux/confirm-reducer';
+import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Preloader from '../../assets/Preloader';
+
+import { closeTrackModal, startClosing } from '../../redux/track-modal-reducer';
+import { setCurrentTrack, openModal } from '../../redux/form-reducer'
+
+import { pauseTrack } from '../../redux/player-reducer';
+import { showToast } from '../../redux/toast-reducer';
+import { showConfirm } from '../../redux/confirm-reducer';
 import ConfirmDialog from '../confirm-dialog/ConfirmDialog';
+
+import { RootState, AppDispatch } from '../../redux/redux-store';
+
+import { openTrackModal } from '../../redux/track-modal-reducer';
+import {
+  useDeleteTrackMutation,
+  useUploadAudioFileMutation,
+  useDeleteAudioFileMutation,
+  tracksApi,
+} from '../../redux/api/tracksApi';
+
+import { useLazyFetchTrackBySlugQuery } from '../../redux/api/trackModalApi';
+
 import SkeletonTrack from '../tracks/skeletonTrack/SkeletonTrack';
+import Preloader from '../../assets/Preloader';
 import DefaultCover from '../../assets/default-cover.jpg';
 import './TrackModal.css';
-import { RootState, AppDispatch } from '../../redux/redux-store';
-import { useDispatch } from 'react-redux';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -23,8 +35,19 @@ const TrackModal = () => {
   const { uploadingTrackId } = useSelector((state: RootState) => state.tracks);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+
   const navigate = useNavigate();
   const location = useLocation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const { track, isOpen, isClosing, isLoading } = useSelector(
+    (state: RootState) => state.trackModal
+  );
+
+  const [deleteTrack] = useDeleteTrackMutation();
+  const [uploadAudioFile, { isLoading: isUploading }] = useUploadAudioFileMutation();
+  const [deleteAudioFile] = useDeleteAudioFileMutation();
+  const [fetchTrackBySlug] = useLazyFetchTrackBySlugQuery();
 
   useEffect(() => {
     if (isOpen && track?.slug) {
@@ -38,14 +61,22 @@ const TrackModal = () => {
 
   if (!track) return null;
 
+  const handleOverlayClick = () => {
+    dispatch(startClosing());
+    setTimeout(() => dispatch(closeTrackModal()), 300);
+  };
+
   const handleAudioDelete = () => {
     ConfirmDialog.setOnConfirm(() => {
-      dispatch(deleteAudioFile(track.id))
+      deleteAudioFile(track.id)
         .unwrap()
         .then(() => {
-          dispatch(fetchAllTracks());
           dispatch(showToast({ message: '✅ Audio deleted', type: 'success' }));
-          dispatch(fetchTrackBySlug(track.slug));
+          fetchTrackBySlug(track.slug)
+            .unwrap()
+            .then((updatedTrack) => {
+              dispatch(openTrackModal({ track: updatedTrack }));
+            }); dispatch(tracksApi.util.invalidateTags(['Tracks']));
         })
         .catch(() => {
           dispatch(showToast({ message: '❌ Error while deleting audio', type: 'error' }));
@@ -57,12 +88,12 @@ const TrackModal = () => {
 
   const handleDeleteTrack = () => {
     ConfirmDialog.setOnConfirm(() => {
-      dispatch(deleteTrack(track.id))
+      deleteTrack(track.id)
         .unwrap()
         .then(() => {
-          dispatch(fetchAllTracks());
           dispatch(showToast({ message: '🗑️ Track deleted', type: 'success' }));
           dispatch(closeTrackModal());
+          dispatch(tracksApi.util.invalidateTags(['Tracks']));
         })
         .catch(() => {
           dispatch(showToast({ message: '❌ Error when deleting a track', type: 'error' }));
@@ -83,6 +114,7 @@ const TrackModal = () => {
       dispatch(closeTrackModal());
       navigate('/tracks', { replace: true });
     }, 300);
+
   };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -93,28 +125,35 @@ const TrackModal = () => {
     const maxSizeMB = 30;
 
     if (!validTypes.includes(file.type)) {
-      dispatch(showToast({
-        message: '❌ Unsupported file format. Acceptable ones are: mp3, wav, mpeg.',
-        type: 'error',
-      }));
+      dispatch(
+        showToast({
+          message: '❌ Unsupported file format. Acceptable ones are: mp3, wav, mpeg.',
+          type: 'error',
+        })
+      );
       return;
     }
 
     const sizeInMB = file.size / (1024 * 1024);
     if (sizeInMB > maxSizeMB) {
-      dispatch(showToast({
-        message: `❌ File is too large (${sizeInMB.toFixed(2)} MB). Maximum — 30 MB.`,
-        type: 'error',
-      }));
+      dispatch(
+        showToast({
+          message: `❌ File is too large (${sizeInMB.toFixed(2)} MB). Maximum — 30 MB.`,
+          type: 'error',
+        })
+      );
       return;
     }
 
-    dispatch(uploadAudioFile({ id: track.id, file, _uniq: Date.now() }))
+    uploadAudioFile({ id: track.id, file })
       .unwrap()
       .then(() => {
-        dispatch(fetchAllTracks());
         dispatch(showToast({ message: '✅ Audio file uploaded successfully!', type: 'success' }));
-        dispatch(fetchTrackBySlug(track.slug));
+        fetchTrackBySlug(track.slug)
+          .unwrap()
+          .then((updatedTrack) => {
+            dispatch(openTrackModal({ track: updatedTrack }));
+          }); dispatch(tracksApi.util.invalidateTags(['Tracks']));
       })
       .catch((err: string) => {
         dispatch(showToast({ message: `❌ ${err}`, type: 'error' }));
@@ -124,19 +163,15 @@ const TrackModal = () => {
       });
   };
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const isUploading = uploadingTrackId === track.id;
-
   return (
     <div
       className={`track-modal-overlay ${isOpen ? '' : 'hidden'} ${isClosing ? 'closing' : ''}`}
       onClick={handleOverlayClick}
     >
       <div className="track-modal-content" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close-btn" onClick={handleOverlayClick}>✖</button>
+        <button className="modal-close-btn" onClick={handleOverlayClick}>
+          ✖
+        </button>
 
         {isLoading ? (
           <SkeletonTrack data-loading="true" />
